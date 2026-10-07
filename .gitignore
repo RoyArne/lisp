@@ -1,0 +1,6 @@
+# The data directories contain generated files
+**/data/
+
+# Common Lisp
+*.fasl
+*.FASL
