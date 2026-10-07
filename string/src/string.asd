@@ -1,10 +1,12 @@
 
 (in-package #:asdf-user)
 
-(defsystem unicode
-  :name "unicode"
+(defsystem string
+  :name "string"
   :author "Roy Arne Gangstad <roy.gangstad@gmail.com>"
   :maintainer "Roy Arne Gangstad <roy.gangstad@gmail.com>"
   :license "GNU Affero General Public License, version 3."
   :depends-on ("unicode")
-  :components ((:file "string")))
+  :components ((:file "string")
+               (:file "type-definitions")
+               (:file "compatibility")))

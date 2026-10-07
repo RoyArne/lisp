@@ -2,6 +2,11 @@
 (defpackage #:string
   (:use #:common-lisp)
 
+  (:local-nicknames (#:code-point #:unicode.code-point)
+                    (#:utf-8 #:unicode.utf-8)
+                    (#:table #:unicode.table)
+                    (#:rope #:unicode.rope))
+  
   ;; 16.2 The Strings Dictionary
   ;;   (https://www.lispworks.com/documentation/HyperSpec/Body/c_string.htm)
   ;;
@@ -36,6 +41,9 @@
            #:string-lessp #:string-greaterp ; string-less? string-not-less?
            #:string-not-greaterp #:string-not-lessp ; do we want these?
            #:stringp ; string?
+
+           ;; Does this make sense? The common lisp definition works like
+           ;; make-array, our strings are not arrays.
            #:make-string)
 
   (:export #:string
@@ -51,5 +59,4 @@
            #:string-equal #:string-not-equal
            #:string-less? #:string-greater?
 
-           #:string?
-           #:make-string))
+           #:string?))
