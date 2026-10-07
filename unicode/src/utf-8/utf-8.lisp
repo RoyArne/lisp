@@ -37,5 +37,9 @@
            #:octets= #:octets/= #:octets< #:octets> #:octets<= #:octets>=
            #:code-point= #:code-point/= #:code-point< #:code-point> #:code-point<= #:code-point>=)
 
+  ;; utf-8/fnv-1a.lisp
+  (:export #:fnv-1a/64
+           #:fnv-1a/32)
+
   ;; utf-8/compatibility.lisp
   (:export #:string-to-octets #:octets-to-string))
