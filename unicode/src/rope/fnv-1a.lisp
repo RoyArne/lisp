@@ -1,16 +1,20 @@
 
 (in-package #:unicode.rope)
 
-(declaim (ftype (function (rope &optional (or (unsigned-byte 64))) (unsigned-byte 64))
+(declaim (ftype (function (rope &optional (or null (unsigned-byte 64)))
+                          (unsigned-byte 64))
                 compute-rope-fnv-1a/64-hash)
 
-         (ftype (function (rope) (unsigned-byte 64))
+         (ftype (function (rope)
+                          (unsigned-byte 64))
                 rope-fnv-1a/64-hash)
 
-         (ftype (function (rope &optional (or (unsigned-byte 32))) (unsigned-byte 32))
+         (ftype (function (rope &optional (or null (unsigned-byte 32)))
+                          (unsigned-byte 32))
                 compute-rope-fnv-1a/32-hash)
 
-         (ftype (function (rope) (unsigned-byte 32))
+         (ftype (function (rope)
+                          (unsigned-byte 32))
                 rope-fnv-1a/32-hash))
          
 (defun compute-rope-fnv-1a/64-hash (rope &optional hash)

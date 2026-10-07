@@ -71,3 +71,6 @@ same order. Otherwise, returns false."
         (etypecase suffix
           (string (utf-8:string-to-octets suffix))
           (rope suffix))))
+
+(defun rope-to-string (rope)
+  (apply #'concatenate 'string (map 'list #'utf-8:octets-to-string (collect-leaves rope))))

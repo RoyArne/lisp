@@ -29,4 +29,5 @@ Leaf nodes are utf-8 octet vectors.")
 
   ;; rope/compatibility.lisp
   (:export #:rope=
-           #:string-join))
+           #:string-join
+           #:rope-to-string))
