@@ -59,4 +59,7 @@
            #:string-equal #:string-not-equal
            #:string-less? #:string-greater?
 
-           #:string?))
+           #:string?)
+
+  ;; Helper Functions? These are not from the Common Lisp standard.
+  (:export #:case-sensitive-string-test))

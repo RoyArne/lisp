@@ -5,8 +5,12 @@
 (in-package #:string)
 
 (defmethod print-object ((object string) stream)
-  (print-unreadable-object (object stream :type t)
-    (write-string (rope:rope-to-string (slot-value object 'rope)) stream)))
+  (cond
+    ((or *print-readably* *print-escape*)
+     (print-unreadable-object (object stream :type t)
+       (write-string (rope:rope-to-string (slot-value object 'rope)) stream)))
+    (t
+     (write-string (rope:rope-to-string (slot-value object 'rope)) stream))))
 
 ;; Convert Common Lisps string, character and symbol types to our strings.
 
