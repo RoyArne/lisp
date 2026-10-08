@@ -1,6 +1,4 @@
-;;;; This is "src/compatibility.lisp".
-;;;;
-;;;; We define some methods for compatibility with sbcl.
+;;;; This is "string/src/compatibility.lisp".
 
 (in-package #:string)
 

@@ -1,3 +1,4 @@
+;;;; This is "string/src/string.asd".
 
 (in-package #:asdf-user)
 
@@ -9,4 +10,5 @@
   :depends-on ("unicode")
   :components ((:file "string")
                (:file "type-definitions")
+               (:file "comparison-functions")
                (:file "compatibility")))

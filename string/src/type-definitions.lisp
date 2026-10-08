@@ -1,4 +1,4 @@
-;;;; This is "src/type-definitions.lisp".
+;;;; This is "string/src/type-definitions.lisp".
 
 (in-package #:string)
 

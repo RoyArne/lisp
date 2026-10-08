@@ -1,6 +1,11 @@
+;;;; This is "string/src/string.lisp".
 
 (defpackage #:string
   (:use #:common-lisp)
+
+  (:documentation
+   "The #:string package implements \(parts of\) chaper 16 \(Strings\) from the
+Common Lisp Hyperspec.")
 
   (:local-nicknames (#:code-point #:unicode.code-point)
                     (#:utf-8 #:unicode.utf-8)
