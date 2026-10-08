@@ -79,3 +79,26 @@ calls if multiple vectors are processed as if they are one vector."
         for result = (logand (* (logxor hash byte) +fnv-prime/32+) #xFFFFFFFF)
         then (logand (* (logxor result byte) +fnv-prime/32+) #xFFFFFFFF)
         finally (return (or result hash))))
+
+
+;; FIXME: make a fold function that works on the result of fnv-1a/64. The
+;; rope functions can use this on its result.
+;;
+;; We need this to make SBCL custom hash-table tests; the 64-bit one doesn't
+;; fit in a fixnum. Presently, we're using the 32 bit function.
+
+(declaim (ftype (function (octets &key (:hash (unsigned-byte 64))) (unsigned-byte 62))
+                fnv-1a/62))
+
+(defun fnv-1a/62 (vector &key (hash +fnv-offset-basis/64+))
+  "Syntax:
+\(fnv-1a/62 vector &key hash\) → result
+
+Description:
+Computes the 64-bit fnv-1a hash for vector and XOR-folds it into a 62-bit
+positive fixnum suitable for SBCL custom hash-table tests."
+  (let ((hash64 (fnv-1a/64 vector :hash hash)))
+    ;; Shift the top 2 bits down and XOR them with the lower 62 bits.
+    ;; #x3FFFFFFFFFFFFFFF is (1 << 62) - 1, which equals SBCL's MOST-POSITIVE-FIXNUM.
+    (logxor (ash hash64 -62)
+            (logand hash64 #x3FFFFFFFFFFFFFFF))))
