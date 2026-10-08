@@ -31,6 +31,7 @@
                              (:file "type-definitions")
                              (:file "construction")
                              (:file "lookup")
+                             (:file "fnv-1a")
                              (:file "stream")
                              (:file "unicodedata")))
 
@@ -40,4 +41,5 @@
                 :components ((:file "rope")
                              (:file "type-definitions")
                              (:file "operations")
+                             (:file "fnv-1a")
                              (:file "compatibility")))))
