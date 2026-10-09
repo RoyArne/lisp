@@ -22,6 +22,7 @@
                              (:file "encoding-and-decoding")
                              (:file "vectors")
                              (:file "comparisons")
+                             (:file "fnv-1a")
                              (:file "compatibility")))
 
                (:module table
@@ -31,7 +32,6 @@
                              (:file "type-definitions")
                              (:file "construction")
                              (:file "lookup")
-                             (:file "fnv-1a")
                              (:file "stream")
                              (:file "unicodedata")))
 
