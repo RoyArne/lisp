@@ -3,7 +3,8 @@
 (in-package #:string)
 
 (defclass string ()
-  ((rope :initarg :rope
+  ((rope :reader rope
+         :initarg :rope
          :initform utf-8:*empty*
          :type rope:rope)))
 

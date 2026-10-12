@@ -141,27 +141,27 @@
 
 (defgeneric string= (string1 string2) ; → generalized boolean
   (:method ((s1 string) (s2 string))
-    (common-lisp:string= (rope:rope-to-string s1) (rope:rope-to-string s2))))
+    (common-lisp:string= (rope:rope-to-string (rope s1)) (rope:rope-to-string (rope s2)))))
 
 (defgeneric string≠ (string1 string2) ; → mismatch index
   (:method ((s1 string) (s2 string))
-    (common-lisp:string/= (rope:rope-to-string s1) (rope:rope-to-string s2))))
+    (common-lisp:string/= (rope:rope-to-string (rope s1)) (rope:rope-to-string (rope s2)))))
 
 (defgeneric string< (string1 string2) ; → mismatch index
   (:method ((s1 string) (s2 string))
-    (common-lisp:string< (rope:rope-to-string s1) (rope:rope-to-string s2))))
+    (common-lisp:string< (rope:rope-to-string (rope s1)) (rope:rope-to-string (rope s2)))))
 
 (defgeneric string> (string1 string2) ; → mismatch index
   (:method ((s1 string) (s2 string))
-    (common-lisp:string> (rope:rope-to-string s1) (rope:rope-to-string s2))))
+    (common-lisp:string> (rope:rope-to-string (rope s1)) (rope:rope-to-string (rope s2)))))
 
 (defgeneric string≤ (string1 string2) ; → mismatch index
   (:method ((s1 string) (s2 string))
-    (common-lisp:string<= (rope:rope-to-string s1) (rope:rope-to-string s2))))
+    (common-lisp:string<= (rope:rope-to-string (rope s1)) (rope:rope-to-string (rope s2)))))
 
 (defgeneric string≥ (string1 string2) ; → mismatch index
   (:method ((s1 string) (s2 string))
-    (common-lisp:string>= (rope:rope-to-string s1) (rope:rope-to-string s2))))
+    (common-lisp:string>= (rope:rope-to-string (rope s1)) (rope:rope-to-string (rope s2)))))
 
 
 ;;; ============================================================================
@@ -170,17 +170,17 @@
 
 (defgeneric string-equal (string1 string2) ; → generalized boolean
   (:method ((s1 string) (s2 string))
-    (common-lisp:string-equal (rope:rope-to-string s1) (rope:rope-to-string s2))))
+    (common-lisp:string-equal (rope:rope-to-string (rope s1)) (rope:rope-to-string (rope s2)))))
 
 (defgeneric string-not-equal (string1 string2) ; → mismatch index
   (:method ((s1 string) (s2 string))
-    (common-lisp:string-not-equal (rope:rope-to-string s1) (rope:rope-to-string s2))))
+    (common-lisp:string-not-equal (rope:rope-to-string (rope s1)) (rope:rope-to-string (rope s2)))))
 
 (defgeneric string-less? (string1 string2) ; → mismatch index
   (:method ((s1 string) (s2 string))
-    (common-lisp:string-lessp (rope:rope-to-string s1) (rope:rope-to-string s2))))
+    (common-lisp:string-lessp (rope:rope-to-string (rope s1)) (rope:rope-to-string (rope s2)))))
 
 (defgeneric string-greater? (string1 string2) ; → mismatch index
   (:method ((s1 string) (s2 string))
-    (common-lisp:string-greaterp (rope:rope-to-string s1) (rope:rope-to-string s2))))
+    (common-lisp:string-greaterp (rope:rope-to-string (rope s1)) (rope:rope-to-string (rope s2)))))
 
