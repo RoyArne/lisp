@@ -1,0 +1,76 @@
+
+(in-package #:asdf-user)
+
+(defsystem namespace
+  :name "namespace"
+  :author "Roy Arne Gangstad <roy.gangstad@gmail.com>"
+  :maintainer "Roy Arne Gangstad <roy.gangstad@gmail.com>"
+  :license "GNU Affero General Public License, version 3."
+  :depends-on ("unicode" "string")
+  :serial t
+  :components ((:file "namespace")
+
+               (:module classes
+                :serial t
+                :depends-on ("namespace")
+                :components ((:file "package")
+                             (:file "symbol")))
+
+               (:module conditions
+                :serial t
+                :depends-on ("namespace")
+                :components ((:file "package-error")))
+               
+               (:module internal-structure
+                :serial t
+                :depends-on ("namespace" classes conditions)
+                :components ((:file "designator-types")
+                             (:file "initial-packages-and-locations")
+                             (:file "package-manipulation") ; :depends-on ("designator-types")
+                             (:file "resolve-string-designator")  ; :depends-on ("designator-types")
+                             (:file "resolve-package-designator")  ; :depends-on ("designator-types")
+                             (:file "resolve-context-designator") ; :depends-on ("designator-types")
+                             (:file "resolve-home-designator") ; :depends-on ("designator-types")
+                             (:file "symbol-manipulation")))
+
+               (:module symbol-interface
+                :serial t
+                :depends-on ("namespace" classes)
+                :components ((:file "copy-symbol")
+                             (:file "make-symbol")
+                             (:file "string")
+                             (:file "symbolp")
+                             (:file "symbol-name")
+                             (:file "symbol-package")))
+
+               (:module package-interface
+                :depends-on ("namespace" classes internal-structure symbol-interface)
+                :components ((:file "unuse-package")
+                             (:file "delete-package" :depends-on ("unuse-package"))
+                             (:file "find-package")
+                             (:file "find-symbol")
+                             (:file "in-package")
+                             (:file "intern")
+                             (:file "list-all-packages")
+                             (:file "list-peer-packages")
+                             (:file "package-internal-list")
+                             (:file "package-internal-to-list")
+                             (:file "package-name")
+                             (:file "package-package")
+                             (:file "package-shadowing-symbols")
+                             (:file "package-use-list")
+                             (:file "package-used-by-list")
+                             (:file "shadow")
+                             (:file "unintern" :depends-on ("find-symbol"))
+                             (:file "shadowing-import":depends-on ("unintern"))
+                             (:file "import" :depends-on ("shadowing-import" "unintern"))
+                             (:file "unexport" :depends-on ("import"))
+                             (:file "export" :depends-on ("import" "shadow" "unintern"))
+                             (:file "use-package" :depends-on ("find-symbol" "shadow" "shadowing-import"))
+                             (:file "make-package" :depends-on ("use-package" "delete-package"))))
+
+               ;;   Methods and functions to make everything work with
+               ;;   SBCL/Common Lisp. For example, methods that allows regular
+               ;;   strings and symbols to work as string designators.
+               ;;
+               (:file "compatibility")))
