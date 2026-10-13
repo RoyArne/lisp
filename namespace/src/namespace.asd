@@ -45,7 +45,8 @@
 
                (:module package-interface
                 :depends-on ("namespace" classes internal-structure symbol-interface)
-                :components ((:file "unuse-package")
+                :components ((:file "add-package-local-nickname")
+                             (:file "unuse-package")
                              (:file "delete-package" :depends-on ("unuse-package"))
                              (:file "find-package")
                              (:file "find-symbol")
@@ -55,11 +56,13 @@
                              (:file "list-peer-packages")
                              (:file "package-internal-list")
                              (:file "package-internal-to-list")
+                             (:file "package-local-nicknames")
                              (:file "package-name")
                              (:file "package-package")
                              (:file "package-shadowing-symbols")
                              (:file "package-use-list")
                              (:file "package-used-by-list")
+                             (:file "remove-package-local-nickname")
                              (:file "shadow")
                              (:file "unintern" :depends-on ("find-symbol"))
                              (:file "shadowing-import":depends-on ("unintern"))

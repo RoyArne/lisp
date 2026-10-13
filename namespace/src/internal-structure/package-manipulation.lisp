@@ -13,6 +13,35 @@
 
 (in-package #:namespace)
 
+;;; Local Package Nicknames
+
+(declaim (ftype (function (string package)
+                          (or null cons))
+                find-local-nickname)
+
+         (ftype (function (string package package)
+                          (values))
+                add-local-nickname!)
+         (ftype (function (string package)
+                          (values))
+                remove-local-nickname!))
+
+(defun find-local-nickname (nickname package)
+  (assoc nickname (local-nicknames package) :test 'string=))
+
+(defun add-local-nickname! (nickname actual-package package)
+  (with-slots (local-nicknames) package
+    (setf local-nicknames (acons nickname actual-package local-nicknames)))
+  (values))
+
+(defun remove-local-nickname! (old-nickname package)
+  (with-slots (local-nicknames) package
+    (let ((nickname (find-local-nickname old-nickname package)))
+      (when nickname
+        (setf local-nicknames (remove nickname local-nicknames)))))
+  (values))
+    
+
 ;;; Searching for Packages
 
 (declaim (ftype (function (context-designator)
@@ -21,40 +50,17 @@
 
          (ftype (function (string package)
                           (or null package))
-                find-visible-package)
-
-         (ftype (function (string package)
-                          package)
-                find-visible-package/error-if-not-found))
+                find-visible-package))
 
 (defun visible-list (context-designator)
-  "Returns a list of packages that can be found by FIND-PACKAGE when
-CONTEXT-DESIGNATOR is the current package."
   (etypecase context-designator
     (null *packages*)
     (package (append (internal-list context-designator)
                      (visible-list (home-package context-designator))))))
 
-(defun find-visible-package (name context)
-  "Returns a package that is nicknamed NAME by CONTEXT; otherwise, returns a
-package named NAME in the list of visible packages. Returns NIL if no matching
-package can be found."
-  (or (rest (find name (local-nicknames context) :test 'string= :key 'first))
-      (find name (visible-list context) :test 'string= :key 'name)))
-
-;; FIXME: Do we even want this? Maybe it is better to use (or (find...)
-;;                                                            (error...)
-;;        at the calling site? shows exactly where the error was signalled and
-;;        not find-visible-package/error-if-not-found, forcing us to search
-;;        for its caller.
-(defun find-visible-package/error-if-not-found (name context)
-  "Calls FIND-VISIBLE-PACKAGE to look for a package named NAME. Signals an error
-if no matching package can be found."
-  (warn "find-visible-package/error-if-not-found may be deprecated!")
-  (or (find-visible-package name context)
-      (error 'package-does-not-exist
-	     :package name
-	     :context context)))
+(defun find-visible-package (name package)
+  (or (rest (find-local-nickname name package))
+      (find name (visible-list package) :test 'string= :key 'name)))
 
 
 ;;; Checking for Package Name Conflicts
