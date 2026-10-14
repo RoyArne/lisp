@@ -63,6 +63,7 @@
                              (:file "package-use-list")
                              (:file "package-used-by-list")
                              (:file "remove-package-local-nickname")
+                             (:file "rename-package" :depends-on ("delete-package"))
                              (:file "shadow")
                              (:file "unintern" :depends-on ("find-symbol"))
                              (:file "shadowing-import":depends-on ("unintern"))
