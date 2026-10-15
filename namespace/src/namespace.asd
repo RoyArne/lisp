@@ -9,7 +9,8 @@
   :depends-on ("unicode" "string")
   :serial t
   :components ((:file "namespace")
-
+               (:file "utilities")
+               
                (:module classes
                 :serial t
                 :depends-on ("namespace")
@@ -44,7 +45,7 @@
                              (:file "symbol-package")))
 
                (:module package-interface
-                :depends-on ("namespace" classes internal-structure symbol-interface)
+                :depends-on ("namespace" "utilities" classes conditions internal-structure symbol-interface)
                 :components ((:file "add-package-local-nickname")
                              (:file "unuse-package")
                              (:file "delete-package" :depends-on ("unuse-package"))
@@ -62,6 +63,7 @@
                              (:file "package-shadowing-symbols")
                              (:file "package-use-list")
                              (:file "package-used-by-list")
+                             (:file "packagep")
                              (:file "remove-package-local-nickname")
                              (:file "rename-package" :depends-on ("delete-package"))
                              (:file "shadow")

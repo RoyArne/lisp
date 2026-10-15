@@ -104,6 +104,33 @@
            #:package-internal-to-list
            #:package-local-nicknames
            #:packagep)
-  
-  (:export #:package
-           #:package?))
+
+  ;; Export the package interface that is implemented so far
+  (:export #:add-package-local-nickname
+           #:delete-package
+           #:export
+           #:find-package
+           #:find-symbol
+           #:import
+           #:in-package
+           #:intern
+           #:list-all-packages
+           #:list-peer-packages
+           #:make-package
+           #:package
+           #:package-internal-list
+           #:package-internal-to-list
+           #:package-local-nicknames
+           #:package-name
+           #:package-package
+           #:package-shadowing-list
+           #:package-use-list
+           #:package-used-by-list
+           #:package?
+           #:remove-package-local-nickname
+           #:rename-package
+           #:shadow
+           #:shadowing-import
+           #:unexport
+           #:unintern
+           #:use-package))
