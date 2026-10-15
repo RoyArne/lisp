@@ -13,9 +13,9 @@ result-form—a form: The default is nil.
 body—a body form as described below.
 
 Description:
-Iterates over the symbols accessible in package. For each sym bol, var is
-bound to the symbol, and statements in the body form are executed. When all
-the symbols have been processed, result-form is evaluated and returned.
+Iterates over the symbols accessible in package. For each symbol, var is bound
+to the symbol, and statements in the body form are executed. When all the
+symbols have been processed, result-form is evaluated and returned.
 
 The body form is an optional declare form followed by zero or more
 statements. Any tag in the body is treated as with tagbody.
