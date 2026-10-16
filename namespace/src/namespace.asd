@@ -47,6 +47,7 @@
                (:module package-interface
                 :depends-on ("namespace" "utilities" classes conditions internal-structure symbol-interface)
                 :components ((:file "add-package-local-nickname")
+                             (:file "do-all-symbols.")
                              (:file "do-symbols")
                              (:file "do-external-symbols")
                              (:file "unuse-package")

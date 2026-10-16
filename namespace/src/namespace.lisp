@@ -108,6 +108,9 @@
   ;; Export the package interface that is implemented so far
   (:export #:add-package-local-nickname
            #:delete-package
+           #:do-all-symbols
+           #:do-symbols
+           #:do-external-symbols
            #:export
            #:find-package
            #:find-symbol
