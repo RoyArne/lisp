@@ -76,7 +76,8 @@
                              (:file "unexport" :depends-on ("import"))
                              (:file "export" :depends-on ("import" "shadow" "unintern"))
                              (:file "use-package" :depends-on ("find-symbol" "shadow" "shadowing-import"))
-                             (:file "make-package" :depends-on ("use-package" "delete-package"))))
+                             (:file "make-package" :depends-on ("use-package" "delete-package"))
+                             (:file "defpackage" :depends-on ("intern" "shadow" "shadowing-import" "import" "export" "use-package"))))
 
                ;;   Methods and functions to make everything work with
                ;;   SBCL/Common Lisp. For example, methods that allows regular
