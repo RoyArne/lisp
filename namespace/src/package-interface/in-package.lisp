@@ -25,5 +25,5 @@ See Also:
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (setf *package* (or (find-visible-package (resolve-string-designator ',name) *package*)
                          (error 'package-does-not-exist
-	                        :package ,name
+	                        :package ',name
 	                        :context *package*)))))
