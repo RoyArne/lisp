@@ -39,7 +39,6 @@
                 :depends-on ("namespace" classes)
                 :components ((:file "copy-symbol")
                              (:file "make-symbol")
-                             (:file "string")
                              (:file "symbolp")
                              (:file "symbol-name")
                              (:file "symbol-package")))
@@ -83,4 +82,10 @@
                ;;   SBCL/Common Lisp. For example, methods that allows regular
                ;;   strings and symbols to work as string designators.
                ;;
-               (:file "compatibility")))
+               (:module compatibility
+                :depends-on ("namespace" classes internal-structure symbol-interface package-interface)
+                :serial t
+                :components ((:file "classes")
+                             (:file "internal-structure")
+                             (:file "symbol-interface")
+                             (:file "package-interface")))))
