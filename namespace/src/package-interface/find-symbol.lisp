@@ -1,4 +1,4 @@
-;;;; This is "namespace/src/package-interface/use-package.lisp".
+;;;; This is "namespace/src/package-interface/find-symbol.lisp".
 
 (in-package #:namespace)
 

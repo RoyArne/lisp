@@ -52,6 +52,7 @@
                              (:file "do-external-symbols")
                              (:file "unuse-package")
                              (:file "delete-package" :depends-on ("unuse-package"))
+                             (:file "find-all-symbols")
                              (:file "find-package")
                              (:file "find-symbol")
                              (:file "in-package")
