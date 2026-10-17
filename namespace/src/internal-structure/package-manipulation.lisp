@@ -22,6 +22,7 @@
          (ftype (function (string package package)
                           (values))
                 add-local-nickname!)
+         
          (ftype (function (string package)
                           (values))
                 remove-local-nickname!))
@@ -40,7 +41,20 @@
       (when nickname
         (setf local-nicknames (remove nickname local-nicknames)))))
   (values))
-    
+
+
+;;; Getting the Home Package
+
+(declaim (ftype (function (context-designator)
+                          context-designator)
+                home-package))
+
+(defun home-package (context-designator)
+  "Returns the home package of PACKAGE. Returns NIL for top-level packages."
+  (etypecase context-designator
+    (null nil)
+    (package (first (internal-to-list context-designator)))))
+
 
 ;;; Searching for Packages
 
@@ -65,11 +79,7 @@
 
 ;;; Checking for Package Name Conflicts
 
-(declaim (ftype (function (context-designator)
-                          context-designator)
-                home-package)
-
-         (ftype (function (package)
+(declaim (ftype (function (package)
                           list)
                 peer-list)
 
@@ -80,12 +90,6 @@
          (ftype (function (string context-designator)
                           (or null package))
                 find-conflicting-package))
-
-(defun home-package (context-designator)
-  "Returns the home package of PACKAGE. Returns NIL for top-level packages."
-  (etypecase context-designator
-    (null nil)
-    (package (first (internal-to-list context-designator)))))
 
 (defun peer-list (package)
   "Returns a list of packages that has the same home package as PACKAGE."
