@@ -16,5 +16,5 @@ Description:
 Returns the home package of symbol, or nil if symbol is not interned
 in any package.")
 
-  (:method ((s symbol))
-    (slot-value s 'package)))
+  (:method ((symbol symbol))
+    (package symbol)))

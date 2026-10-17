@@ -38,12 +38,4 @@ designator.")
     designator)
   
   (:method ((designator symbol))
-    (name designator))
-
-  ;; Compatibility functions, depending on the string function having
-  ;; compatibility definitions for common lisp strings and symbols.
-  (:method ((designator common-lisp:string))
-    (string designator))
-  
-  (:method ((designator common-lisp:symbol))
-    (string designator)))
+    (name designator)))

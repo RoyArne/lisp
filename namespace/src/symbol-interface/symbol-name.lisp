@@ -15,6 +15,6 @@ name—a string.
 Description:
 Returns the name of symbol.")
   
-  (:method ((s symbol))
-    (slot-value s 'name)))
+  (:method ((symbol symbol))
+    (name symbol)))
 

@@ -16,6 +16,9 @@ Description:
 Returns a list of all symbols that have a name that is the same \(using
 string=)\ as name.")
 
+  (:method (name)
+    (find-all-symbols (resolve-string-designator name)))
+  
   (:method ((name string))
     (apply #'append
            (loop for package in (visible-list *package*)

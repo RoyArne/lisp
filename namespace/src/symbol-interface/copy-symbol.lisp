@@ -21,10 +21,10 @@ Exceptional Situations:
 The copy properties functionality is not implemented yet, and copy-symbol
 signals an error if copy-symbol? is true.")
   
-  (:method ((s symbol) &optional copy-properties?)
+  (:method ((symbol symbol) &optional copy-properties?)
     (declare (type boolean copy-properties?))
     (if copy-properties?
         (error "Cannot copy the properties of~%  ~S~%~
                 because that functionality is not implemented yet."
-               s)
-        (make-instance 'symbol :name (slot-value s 'name)))))
+               symbol)
+        (make-instance 'symbol :name (name symbol)))))
