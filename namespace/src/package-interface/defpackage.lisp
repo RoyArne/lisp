@@ -2,45 +2,59 @@
 
 (in-package #:namespace)
 
-(declaim (ftype (function (t)
-                          (values))
-                check-defpackage-option)
+(declaim (ftype (function (common-lisp:symbol list)
+                          boolean)
+                option-present?))
+
+(defun option-present? (name options)
+  (and (find name options :key 'first) t))
+
+(declaim (inline option-name option-values)
+
+         (type list *defpackage-option-names*)
+
+         (ftype (function (list)
+                          common-lisp:symbol)
+                option-name)
 
          (ftype (function (common-lisp:symbol list)
                           boolean)
-                option-present?)
+                named-option?)
 
-         (ftype (function (common-lisp:symbol list)
+         (ftype (function (list)
                           list)
-                mapcan-option)
+                option-values)
 
-         (ftype (function (common-lisp:symbol list)
-                          (values t boolean))
-                at-most-one-of))
+         (ftype (function (t)
+                          (values))
+                check-defpackage-option))
+
+(defparameter *defpackage-option-names*
+  '(:local-nicknames :home :use :intern :shadow :export :import-from :shadowing-import-from :size))
+
+(defun option-name (option)
+  (first option))
+
+(defun named-option? (name option)
+  (eql name (option-name option)))
+
+(defun option-values (option)
+  (rest option))
 
 (defun check-defpackage-option (option)
-  ;; We need proper syntax checks?
-  ;;
-  ;; (:local-nicknames (string-designator string-designator)), zero or more
-  ;; (:home string-designator), at most one
-  ;; (:use string-designator…), zero or more
-  ;; (:intern string-designator…), zero or more
-  ;; (:shadow string-designator…), zero or more
-  ;; (:export string-designator…), zero or more
-  ;; (:import-from string-designator string-designator…), zero or more
-  ;; (:shadowing-import-from string-designator string-designator…), zero or more
-  ;; (:size integer), at most one
   (unless (and (listp option)
-               (member (first option)
-                       (list :local-nicknames :home :use :intern :shadow :export :import-from :shadowing-import-from :size)))
+               ;; we don't use option-name because the result might not be a symbol.
+               (member (first option) *defpackage-option-names*))
     (error 'type-error
            :datum option
            :expected-type 'defpackage-option
            :context "while parsing defpackage options."))
   (values))
 
-(defun option-present? (name options)
-  (and (find name options :key 'first) t))
+
+(declaim (ftype (function (common-lisp:symbol list)
+                          list)
+                mapcan-option))
 
 (defun mapcan-option (name options)
   ;; Extract and concatenate all values of the name option.
@@ -51,9 +65,22 @@
   ;; becomes
   ;;   (:shadow #:a #:b #:c #:e #:f)
   (mapcan #'(lambda (option)
-              (when (eql name (first option))
-                (rest option)))
+              (when (named-option? name option)
+                (option-values option)))
           options))
+
+
+(declaim (ftype (function (common-lisp:symbol list)
+                          (values t boolean))
+                at-most-one-of)
+
+         (ftype (function (list)
+                          (values (or null string) boolean))
+                home-option)
+
+         (ftype (function (list)
+                          (values (or null integer) boolean))
+                size-option))
 
 (defun at-most-one-of (name options)
   ;; Signals an error unless there is exactly one or zero name option
@@ -62,22 +89,32 @@
   ;; present), the second is t if a value was present, and nil if not.
   (let ((option (mapcan-option name options)))
     (if (not (cdr option))
-        (values (first option) (not (null option)))
+        (values (option-name option) (not (null option)))
         (error 'type-error
 	       :datum (cons name option)
 	       :expected-type (list name 'defpackage-option)
-	       :context "which allows only one value."))))
-
-(declaim (ftype (function (list)
-                          (values (or null string) boolean))
-                home-option))
+	       :context (ecase name
+                          (:home "which allows exactly one string-designator value.")
+                          (:size "which allows exactly one integer value."))))))
 
 (defun home-option (options)
+  ;; (:home string-designator), at most one
   (multiple-value-bind (home present?)
       (at-most-one-of :home options)
     (values (when home (resolve-string-designator home))
             present?)))
 
+(defun size-option (options)
+  ;; (:size integer), at most one
+  (multiple-value-bind (size present?)
+      (at-most-one-of :size options)
+    (when present?
+      (unless (integerp size)
+        (error 'type-error
+               :datum (list :size size)
+               :expected-type (list :size 'defpackage-option)
+               :context "which allows exactly one integer value.")))
+    (values size present?)))
 
 
 (declaim (ftype (function (list)
@@ -89,15 +126,19 @@
 ;;; can be concatenated into one list.
 
 (defun use-option (options)
+  ;; (:use string-designator…), zero or more
   (map 'list 'resolve-string-designator (mapcan-option :use options)))
 
 (defun intern-option (options)
+  ;; (:intern string-designator…), zero or more
   (map 'list 'resolve-string-designator (mapcan-option :intern options)))
 
 (defun shadow-option (options)
+  ;; (:shadow string-designator…), zero or more
   (map 'list 'resolve-string-designator (mapcan-option :shadow options)))
 
 (defun export-option (options)
+  ;; (:export string-designator…), zero or more
   (map 'list 'resolve-string-designator (mapcan-option :export options)))
 
 
@@ -120,10 +161,28 @@
         collect (map 'list 'resolve-string-designator (rest option))))
 
 (defun import-from-options (options)
+  ;; (:import-from string-designator string-designator…), zero or more
   (any-import-from-option :import-from options))
 
 (defun shadowing-import-from-options (options)
+  ;; (:shadowing-import-from string-designator string-designator…), zero or more
   (any-import-from-option :shadowing-import-from options))
+
+(declaim (ftype (function (list)
+                          list)
+                local-nicknames-options))
+
+(defun local-nicknames-options (options)
+  ;; (:local-nicknames (string-designator string-designator)), zero or more
+  (loop for nicknames in (mapcan-option :local-nicknames options)
+        collect (if (= 2 (length nicknames))
+                    (list (resolve-string-designator (first nicknames))
+                          (resolve-string-designator (second nicknames)))
+                    (error 'type-error
+                           :datum nicknames
+                           :expected-type (list :local-nicknames 'defpackage-option)
+                           :context "which must be a list of two string designators."))))
+
 
 (defun expand-defpackage-form (name options)
   (let ((package (common-lisp:gensym "PACKAGE"))
@@ -131,6 +190,7 @@
 	(home-supplied? (common-lisp:gensym "HOME-SUPPLIED?"))
         (home-option (common-lisp:gensym "HOME-OPTION"))
 	(home-package (common-lisp:gensym "HOME"))
+        (nicknames (common-lisp:gensym "NICKNAMES"))
 	(string (common-lisp:gensym "STRING"))
 	(strings (common-lisp:gensym "STRINGS")))
     `(eval-when (:compile-toplevel :load-toplevel :execute)
@@ -149,27 +209,18 @@
                             (make-instance 'package))))
 
          ;; We need to set the packages name, and place it in the hierarchy,
-         ;; in THAT order. If we're working with an existing package, it is
-         ;; possible that we have to change its location. Or is it not?
-         ;;
-         ;; Given NIL as home we must place the package at the top-level. If
-         ;; we find a package there, it must also be a top-level package, and
-         ;; we don't need to change anything. Except place it first in the
-         ;; list. Like make-package, the defpackage should place what it
-         ;; defines at the head position in the place it is placed.
-         ;;
-         ;; Given a package, we have resolved that package to be the new
-         ;; packages home. If we find a package there, it may be a peer
-         ;; package of home, or in its internal list. If it is in the peer
-         ;; list, do we move it?
-
+         ;; in THAT order.
          (cond
            ((name ,package)
-            ;; We're working with a pre-existing package
+            ;; We're working with a pre-existing package.
+            ;;
+            ;; CONSIDER: Should we ensure that it is the first package in it's
+            ;;           location? New packages are placed there, one might
+            ;;           expect defpackage to do the same even with a
+            ;;           pre-existing package.
             (unless (eql ,home-package (home-package ,package))
-              ;; Do we just give up? Or is it the users intention to move this
-              ;; package? Given that a home package is explicitly specified,
-              ;; maybe we should assume an intention to move.
+              ;; We assume the intent is to move the package because a new
+              ;; home was specified.
               (remove-package ,package (home-package ,package))
               (add-package ,package ,home-package)))
            (t
@@ -178,6 +229,12 @@
             ;; the name doesn't conflict with anything.
             (setf (slot-value ,package 'name) ,resolved-name)
             (add-package ,package ,home-package)))
+
+         ;; Next we resolve the local nicknames.
+         (loop for ,nicknames in ,(local-nicknames-options options)
+               do (add-package-local-nickname (first ,nicknames)
+                                              (resolve-package-designator (second ,nicknames))
+                                              ,package))
 	 
 	 ;; The order in which the remaining options appear in a defpackage
 	 ;; form is irrelevant. The order in which they are executed is as
@@ -204,7 +261,6 @@
                  ,package)
 
 	 ;; We ignore :size and :documentation for now.
-         ;; local nicknames are still missing.
 	   
 	 ,package))))
 

@@ -103,7 +103,7 @@
            #:in-package                ; Macro                (implemented)
            #:unuse-package             ; Function             (implemented)
            #:use-package               ; Function             (implemented)
-           #:defpackage                ; Macro
+           #:defpackage                ; Macro                (partial implementation)
            #:do-symbols                ; Macro                (implemented)
            #:do-external-symbols       ; Macro                (implemented)
            #:do-all-symbols            ; Macro                (implemented)
@@ -136,7 +136,7 @@
            #:in-package                ; Macro                (implemented)
            #:unuse-package             ; Function             (implemented)
            #:use-package               ; Function             (implemented)
-           ;; #:defpackage                ; Macro
+           #:defpackage                ; Macro                (partial implementation)
            #:do-symbols                ; Macro                (implemented)
            #:do-external-symbols       ; Macro                (implemented)
            #:do-all-symbols            ; Macro                (implemented)
