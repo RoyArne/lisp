@@ -115,8 +115,9 @@
                 remove-shadowing-symbol))
 
 (defun remove-symbol-from-table (name table)
-  (when (eql name (find-symbol-in-table name table))
-    (remhash name table)))
+  ;; why?
+  ;; (when (eql name (find-symbol-in-table name table))
+  (remhash name table))
 
 (defun name-to-remove (name)
   (etypecase name
