@@ -6,4 +6,4 @@
   (find-symbol (string name) package))
 
 (defmethod intern ((name common-lisp:string) &optional (package *package*))
-  (intenrn (string name) package))
+  (intern (string name) package))

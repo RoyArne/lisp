@@ -55,7 +55,7 @@
                              (:file "find-package")
                              (:file "find-symbol")
                              (:file "in-package")
-                             (:file "intern")
+                             (:file "intern" :depends-on ("find-symbol"))
                              (:file "list-all-packages")
                              (:file "list-peer-packages")
                              (:file "package-internal-list")

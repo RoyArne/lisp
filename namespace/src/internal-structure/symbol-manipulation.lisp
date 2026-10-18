@@ -23,7 +23,10 @@
                           (values (or null symbol) boolean))
                 find-internal-symbol
                 find-external-symbol
-                find-shadowing-symbol
+                find-shadowing-symbol)
+
+         (ftype (function (string package)
+                          (values (or null symbol) (or null common-lisp:keyword)))
                 find-present-symbol))
 
 (defun find-symbol-in-table (name table)
@@ -49,6 +52,7 @@
           (if external?
               (values symbol :external)
               (values nil nil))))))
+
 
 (declaim (ftype (function (symbol package)
                           boolean)
@@ -100,7 +104,7 @@
                           boolean)
                 remove-symbol-from-table)
          
-         (ftype (function ((or string symbol) package)
+         (ftype (function ((or string symbol))
                           string)
                 name-to-remove)
 
