@@ -215,5 +215,12 @@
            #:*keyword*                        ; Variable (implemented)
            #:*lisp*                           ; Variable (implemented)
            #:*packages*                       ; Variable (implemented)
-           #:*user*))                         ; Variable (implemented)
+           #:*user*)                          ; Variable (implemented)
+
+  ;; Restarts
+  ;;
+  ;; Some conditions offer restarts, we export the restart names here.
+
+  (:export #:keep-old                         ; use-package
+           #:take-new))                       ; use-package
   
