@@ -95,7 +95,7 @@
 ;;; it signals conflicting-symbol-names with options to keep-old and take-new
 ;;;
 ;;; the tests make use of package-use-list, package-used-by-list, export,
-;;; intern, and, symbol-package
+;;; intern, find-symbol, and, symbol-package
 ;;;
 ;;; we can consider package-use-list and package-used-by-list tested.
 
@@ -170,7 +170,7 @@
 ;;;
 ;;; unuse-package accepts a DESIGNATOR for a LIST of PACKAGE DESIGNATORs
 ;;;
-;;; the tests make use of use-package.
+;;; the tests make use of use-package abnd find-symbol.
 
 (test unuse-package-with-string-designators
     (with-packages (p1 p2 p3 p4)
@@ -195,3 +195,48 @@
     (ns:unuse-package "p1" p2)
     (is (eql (ns:find-symbol "s1" p1) (ns:find-symbol "s1" p2)))))
 
+;;; FIND-SYMBOL
+;;; ===========
+;;;
+;;; the tests make use of intern, export, import, use-package.
+
+(test find-symbol-no-matches
+  (with-packages (p1 p2)
+    (multiple-value-bind (s1 status)
+        (ns:find-symbol "s1")
+      (is-false s1)
+      (is-false status))
+    (multiple-value-bind (s1 status)
+        (ns:find-symbol "s1" p2)
+      (is-false s1)
+      (is-false status))
+    (ns:intern "s1" p2)
+    (multiple-value-bind (s1 status)
+        (ns:find-symbol "s1")
+      (is-false s1)
+      (is-false status))))
+
+(test find-symbol-matches
+  (with-packages (p1 p2 p3)
+    (let ((s1 (ns:intern "s1")))
+      (multiple-value-bind (s1-2 status)
+          (ns:find-symbol "s1")
+        (is (eql s1 s1-2))
+        (is (eql :internal status)))
+      (is-true (ns:export s1))
+      (multiple-value-bind (s1-2 status)
+          (ns:find-symbol "s1")
+        (is (eql s1 s1-2))
+        (is (eql :external status)))
+      (is-true (ns:import s1 p2))
+      (multiple-value-bind (s1-2 status)
+          (ns:find-symbol "s1" p2)
+        (is (eql s1 s1-2))
+        (is (eql :internal status)))
+      (is-true (ns:use-package p1 p3))
+      (multiple-value-bind (s1-2 status)
+          (ns:find-symbol "s1" p3)
+        (is (eql s1 s1-2))
+        (is (eql :inherited status))))))
+    
+    
