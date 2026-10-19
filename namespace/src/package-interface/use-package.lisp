@@ -11,20 +11,25 @@ packages—a designator for a list of package designators.
 package—a package designator. The default is the current package.
 
 Description:
-use-package causes package to inherit all the external symbols of
-packages. The inherited symbols become accessible as internal symbols
-of package.
+
+Causes package to inherit all the external symbols of packages. The new
+symbols become accessible as internal symbols of package.
 
 Packages are added to the use list of package if they are not there
-already. All external symbols in packages become accessible in package
-as internal symbols. use-package does not cause any new symbols to be
-present in package but only makes them accessible by inheritance.
+already.
 
-use-package checks for name conflicts between the newly imported
-symbols and those already accessible in package. A name conflict in
-use-package between two external symbols inherited by package from
-packages-to-use may be resolved in favor of either symbol by importing
-one of them into package and making it a shadowing symbol.")
+Exceptional Situations:
+
+conflicting-symbol-names
+
+  A correctable error of type package-error.
+
+  Signaled if one of the newly accessible symbols has the same name as one
+  already accessible. Two restarts are offered:
+
+  'keep-old' keeps the one already accessible by making it a shadowing symbol.
+
+  'take-new' makes the newly accessible symbol a shadowing symbol.")
 
   (:method (to-use &optional (package *package*))
     (declare (type package-designator package))
