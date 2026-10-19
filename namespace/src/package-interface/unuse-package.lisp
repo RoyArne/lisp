@@ -12,12 +12,8 @@ packages—a designator for a list of package designators.
 package—a package designator. The default is the current package.
 
 Description:
-unuse-package causes package to cease inheriting all the external
-symbols of packages-to-unuse; unuse-package undoes the effects of
-use-package. The packages are removed from the use list of package.
-
-Any symbols that have been imported into package continue to be
-present in package.")
+Undoes the effects of use-package. Any symbols that have been imported into
+package continue to be present.")
 
   (:method (package-to-unuse &optional (package *package*))
     (declare (type package-designator package))
