@@ -1,4 +1,37 @@
 ;;;; This is "namespace/src/classes-and-conditions/packages.lisp".
+;;;;
+;;;; TODO: We may change
+;;;;
+;;;;       · internal-list → internal-packages
+;;;;       · internal-to-list → internal-to-packages
+;;;;
+;;;;       and add
+;;;;
+;;;;       · external-packages, and
+;;;;       · unresolved-external-packages
+;;;;
+;;;;       The additions will be needed if we want to export any internal functions:
+;;;;
+;;;;       · (export-package packages &optional package) → t
+;;;;
+;;;;       which makes all PACKAGES available from outside PACKAGE by means of
+;;;;       "dotted" string designators:
+;;;;
+;;;;       · #:this-is.a.test → three packages: #:this-is,
+;;;;                                            #:a (internal to #:this-is), and
+;;;;                                            #:test (internal to #:a).
+;;;;
+;;;;
+;;;;       Alternatively, we may keep internal-list and internal-to-list, and add
+;;;;
+;;;;       · external-list
+;;;;       · unresolved-external-list
+;;;;
+;;;;       The first is consistent with the naming of internal-symbols and
+;;;;       external-symbols. The second matches use-list and used-by-list.
+;;;;
+;;;;       The first thing to do is find all uses of internal-list and
+;;;;       internal-to-list.
 
 (in-package #:namespace)
 
