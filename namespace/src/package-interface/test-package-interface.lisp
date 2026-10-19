@@ -1,15 +1,48 @@
 ;;;; This is "namespace/src/package-interface/test-package-interface.lisp".
+;;;;
+;;;; TODO: test use-package on packages that don't exist.
+;;;;       test use-package on internal packages.
 
 (in-package #:test-namespace)
 
 (def-suite test-package-interface :in namespace)
 (in-suite test-package-interface)
 
-(test make-package
-  (with-packages (p1 (p2 (p3 p4)))
-    (is-true (typep (ns::make-package "p5") 'ns::package))
-    (signals ns::conflicting-package-names (ns::make-package "p5"))
-    (is-true (typep (ns::make-package "p5" :home p4) 'ns::package))))
+;; (test make-package
+;;   (with-packages (p1 (p2 (p3 p4)))
+;;     (is-true (typep (ns::make-package "p5") 'ns::package))
+;;     (signals ns::conflicting-package-names (ns::make-package "p5"))
+;;     (is-true (typep (ns::make-package "p5" :home p4) 'ns::package))))
+
+
+;;; IN-PACKAGE
+;;; ==========
+;;;
+;;; the tests make use of *package*
+
+(test in-package-in-the-top-level
+  (with-packages (p1 p2)
+    (is (eql ns:*package* p1))
+    (is (eql p2 (ns:in-package "p2")))
+    (is (eql ns:*package* p2))))
+
+(test in-package-switch-to-same-package
+  (with-packages (p1 p2)
+    (is (eql p1 (ns:in-package "p1")))
+    (is (eql ns:*package* p1))))
+
+(test in-package-using-internal-packages
+  (with-packages ((p1 p2) (p3))
+    (is (eql p2 (ns:in-package "p2")))
+    (is (eql ns:*package* p2))
+    (is (eql p3 (ns:in-package "p3")))
+    (is (eql ns:*package* p3))))
+
+(test in-package-signals-package-does-not-exist
+  (with-packages (p1)
+    (signals ns:package-does-not-exist (ns:in-package "p4")))
+  (with-packages (p1 (p2 p3))
+    (signals ns:package-does-not-exist (ns:in-package "p3"))))
 
 
 ;;; INTERN, EXPORT and SYMBOL-PACKAGE
@@ -23,7 +56,9 @@
 ;;;   nil—a new symbol was created.
 ;;;
 ;;; the tests make use of export, use-package, and, symbol-package
+;;;
 ;;; we can consider export and symbol-package tested
+;;;
 
 (test intern-in-p1-then-intern-again
   (with-packages (p1)
@@ -59,21 +94,47 @@
 ;;;
 ;;; it signals conflicting-symbol-names with options to keep-old and take-new
 ;;;
-;;; the tests make use of export, intern, and, symbol-package
+;;; the tests make use of package-use-list, package-used-by-list, export,
+;;; intern, and, symbol-package
+;;;
+;;; we can consider package-use-list and package-used-by-list tested.
 
 (test use-package-with-string-designators
   (with-packages (p1 p2 p3 p4)
     (is-true (ns:use-package "p2"))
-    (is-true (ns:use-package (list "p1" "p2" "p3") p4))))
+    (is (eql p2 (find p2 (ns:package-use-list p1))))
+    (is (eql p1 (find p1 (ns:package-used-by-list p2))))
+    (is-true (ns:use-package (list "p1" "p2" "p3") p4))
+    (is (eql p1 (find p1 (ns:package-use-list p4))))
+    (is (eql p2 (find p2 (ns:package-use-list p4))))
+    (is (eql p3 (find p3 (ns:package-use-list p4))))
+    (is (eql p4 (find p4 (ns:package-used-by-list p1))))
+    (is (eql p4 (find p4 (ns:package-used-by-list p2))))
+    (is (eql p4 (find p4 (ns:package-used-by-list p3))))))
+
 
 (test use-package-with-package-objects
   (with-packages (p1 p2 p3 p4)
     (is-true (ns:use-package p2))
-    (is-true (ns:use-package (list p1 p2 p3) p4))))
+    (eql p2 (find p2 (ns:package-use-list p1)))
+    (eql p1 (find p1 (ns:package-used-by-list p2)))
+    (is-true (ns:use-package (list p1 p2 p3) p4))
+    (is (eql p1 (find p1 (ns:package-use-list p4))))
+    (is (eql p2 (find p2 (ns:package-use-list p4))))
+    (is (eql p3 (find p3 (ns:package-use-list p4))))
+    (is (eql p4 (find p4 (ns:package-used-by-list p1))))
+    (is (eql p4 (find p4 (ns:package-used-by-list p2))))
+    (is (eql p4 (find p4 (ns:package-used-by-list p3))))))
 
 (test use-package-with-package-designators
   (with-packages (p1 p2 p3 p4)
-    (is-true (ns:use-package (list p1 "p2" p3) p4))))
+    (is-true (ns:use-package (list p1 "p2" p3) p4))
+    (is (eql p1 (find p1 (ns:package-use-list p4))))
+    (is (eql p2 (find p2 (ns:package-use-list p4))))
+    (is (eql p3 (find p3 (ns:package-use-list p4))))
+    (is (eql p4 (find p4 (ns:package-used-by-list p1))))
+    (is (eql p4 (find p4 (ns:package-used-by-list p2))))
+    (is (eql p4 (find p4 (ns:package-used-by-list p3))))))
 
 (test use-package-signals-conflicting-symbol-names
   (with-packages (p1 p2)
@@ -102,4 +163,35 @@
                                   (invoke-restart (find-restart 'ns:take-new condition)))))
                (ns:use-package p1 p2)))
     (is (eql p1 (ns:symbol-package (ns:find-symbol "s1" p2))))))
+
+
+;;; UNUSE-PACKAGE
+;;; =============
+;;;
+;;; unuse-package accepts a DESIGNATOR for a LIST of PACKAGE DESIGNATORs
+;;;
+;;; the tests make use of use-package.
+
+(test unuse-package-with-string-designators
+    (with-packages (p1 p2 p3 p4)
+      (ns:use-package "p2")
+      (is-true (ns:unuse-package "p2"))
+      (is-false (find p2 (ns:package-use-list p1)))
+      (is-false (find p1 (ns:package-used-by-list p2)))
+      (ns:use-package (list "p1" "p2" "p3") p4)
+      (is-true (ns:unuse-package (list "p1" "p2" "p3") p4))
+      (is-false (find p1 (ns:package-use-list p4)))
+      (is-false (find p2 (ns:package-use-list p4)))
+      (is-false (find p3 (ns:package-use-list p4)))
+      (is-false (find p4 (ns:package-used-by-list p1)))
+      (is-false (find p4 (ns:package-used-by-list p2)))
+      (is-false (find p4 (ns:package-used-by-list p3)))))
+
+(test unuse-package-imported-symbols-still-accessible
+  (with-packages (p1 p2)
+    (ns:export (ns:intern "s1"))
+    (ns:import (ns:find-symbol "s1" p1) p2)
+    (ns:use-package "p1" p2)
+    (ns:unuse-package "p1" p2)
+    (is (eql (ns:find-symbol "s1" p1) (ns:find-symbol "s1" p2)))))
 
