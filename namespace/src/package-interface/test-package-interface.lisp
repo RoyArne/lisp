@@ -195,6 +195,7 @@
     (ns:unuse-package "p1" p2)
     (is (eql (ns:find-symbol "s1" p1) (ns:find-symbol "s1" p2)))))
 
+
 ;;; FIND-SYMBOL
 ;;; ===========
 ;;;
@@ -238,5 +239,22 @@
           (ns:find-symbol "s1" p3)
         (is (eql s1 s1-2))
         (is (eql :inherited status))))))
-    
-    
+
+
+;;; FIND-PACKAGE
+;;; ============
+;;;
+;;; TODO: test find-package with local nicknames.
+
+(test find-package-no-matches
+  (with-packages (p1 (p2 p3))
+    (is-false (ns:find-package "p4"))
+    (is-false (ns:find-package "p5"))
+    (is-false (ns:find-package "p3")))) ; p3 exists but is internal and not visible
+
+(test find-package-matches
+  (with-packages (p1 (p2 p3))
+    (is (eql p1 (ns:find-package "p1")))
+    (is (eql p2 (ns:find-package "p2")))
+    (is (eql p2 (ns:in-package "p2")))
+    (is (eql p3 (ns:find-package "p3")))))
