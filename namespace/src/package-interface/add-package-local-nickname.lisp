@@ -53,10 +53,7 @@ designator.
 Signals an error of type package-does-not-exist if package cannot be
 found in context.
 Signals a correctable error of type conflicting-package-names if
-local-nickname is already a local nickname for a different package.
-Signals a correctable error of type conflicting-package-names if
-local-nickname is the name or a nickname of the package to which the
-nickname is being added.")
+local-nickname is already a local nickname for a different package.")
 
   (:method (nickname actual-package &optional (package *package*))
     (declare (type package-designator package))

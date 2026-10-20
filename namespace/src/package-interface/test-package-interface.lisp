@@ -55,9 +55,7 @@
 ;;;   :inherited—the symbol was found and is inherited by use of use-package, or,
 ;;;   nil—a new symbol was created.
 ;;;
-;;; the tests make use of export, use-package, and, symbol-package
-;;;
-;;; we can consider export and symbol-package tested
+;;; the tests make use of export, use-package, and, symbol-package, package-shadowing-symbols
 ;;;
 
 (test intern-in-p1-then-intern-again
@@ -319,6 +317,39 @@
         (is (eql s1 s1-2))
         (is (eql :inherited status))))))
 
+
+;;; ADD-PACKAGE-LOCAL-NICKNAME, REMOVE-PACKAGE-LOCAL-NICKNAME, PACKAGE-LOCAL-NICKNAMES
+;;; ==================================================================================
+
+(test add-package-local-nickname
+  (with-packages (p1 p2)
+    (let ((nickname (string:string "nickname")))
+      (is-false (ns:find-package nickname))
+      (is (eql p1 (ns:add-package-local-nickname nickname p2 p1)))
+      (is (eql p2 (rest (find nickname (ns:package-local-nicknames p1) :test 'string:string= :key 'first))))
+      (is (eql p2 (ns:find-package nickname))))))
+
+(test add-package-local-nickname-signals-package-does-not-exist
+  (with-packages (p1)
+    (let ((nickname (string:string "nickname")))
+      (is-false (ns:find-package nickname))
+      (signals ns:package-does-not-exist (ns:add-package-local-nickname nickname "test")))))
+
+(test add-package-local-nickname-signals-conflicting-package-names
+  (with-packages (p1 p2 p3)
+    (let ((nickname (string:string "nickname")))
+      (is (eql p1 (ns:add-package-local-nickname nickname p2 p1)))
+      (signals ns:conflicting-package-names (ns:add-package-local-nickname nickname p3 p1)))))
+    
+
+(test remove-package-local-nickname
+  (with-packages (p1 p2)
+    (let ((nickname (string:string "nickname")))
+      (is (eql p1 (ns:add-package-local-nickname nickname p2 p1)))
+      (is (eql p2 (ns:find-package nickname)))
+      (is-true (ns:remove-package-local-nickname nickname))
+      (is-false (ns:find-package nickname))
+      (is-false (ns:remove-package-local-nickname nickname)))))
 
 ;;; FIND-PACKAGE
 ;;; ============
