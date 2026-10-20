@@ -219,8 +219,14 @@
 
   ;; Restarts
   ;;
-  ;; Some conditions offer restarts, we export the restart names here.
+  ;; Some conditions offer restarts, we export the restart names here. Some
+  ;; names are also exported above.
+  ;;
 
-  (:export #:keep-old                         ; use-package
-           #:take-new))                       ; use-package
+  (:export #:abort                            ; import
+           #:import                           ; export, also a function above
+           #:keep-old                         ; use-package
+           #:shadow                           ; export, import, also a function above
+           #:take-new                         ; use-package
+           #:unintern))                       ; export, import, also a function above
   
