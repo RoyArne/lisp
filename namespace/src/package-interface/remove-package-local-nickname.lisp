@@ -24,6 +24,5 @@ returns NIL.")
 
   (:method ((old-nickname string) &optional (package *package*))
     (declare (type package-designator package))
-    (remove-local-nickname! old-nickname (resolve-package-designator package *package*))
-    t))
+    (remove-local-nickname! old-nickname (resolve-package-designator package *package*))))
     

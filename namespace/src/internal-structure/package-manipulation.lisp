@@ -24,7 +24,7 @@
                 add-local-nickname!)
          
          (ftype (function (string package)
-                          (values))
+                          boolean)
                 remove-local-nickname!))
 
 (defun find-local-nickname (nickname package)
@@ -39,9 +39,9 @@
   (with-slots (local-nicknames) package
     (let ((nickname (find-local-nickname old-nickname package)))
       (when nickname
-        (setf local-nicknames (remove nickname local-nicknames)))))
-  (values))
-
+        (setf local-nicknames (remove nickname local-nicknames))
+        t))))
+      
 
 ;;; Getting the Home Package
 
