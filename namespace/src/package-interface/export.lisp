@@ -56,6 +56,42 @@ conflicting-symbol-names
 		     :package package
 		     :context *package*
 		     :symbol symbol)
+            ;; FIXME: Import may signal a correctable error of type
+            ;;        conflicting-symbol-names. Correcting may fuck our
+            ;;        symbol tables as described below.
+            ;;
+            ;;        This happens if there is another symbol with the same
+            ;;        name as SYMBOL accessible in PACKAGE.
+            ;;
+            ;;        The SYMBOL may be accessible as an :internal or
+            ;;        :external symbol which gives us abort and unintern
+            ;;        options from import.
+            ;;
+            ;;        Otherwise SYMBOL is accessible as an :inherited symbol,
+            ;;        which gives us abort and shadow options from import.
+            ;;
+            ;;        The unintern and shadow options work correctly.
+            ;;
+            ;;        The ABORT option needs handling (in both cases).
+            ;;            =====
+            ;;
+            ;;        If we use the abort option to correct this, then import
+            ;;        doesn't do anything and returns t.
+            ;;
+            ;;        We end up setting the the status variable to :internal,
+            ;;        which leads us to
+            ;;
+            ;;     1. add the given symbol to our external symbols, and either
+            ;;
+            ;;    2a. removing the symbol that is already present if it was an :internal symbol,
+            ;;        replacing it (by 1.) if it was an external symbol, or
+            ;;
+            ;;    2b. Bringing the package into a permanent state of conflict
+            ;;        if it was an :inherited symbol: it remains accessible.
+            ;;
+            ;;        We probably need to establish a handler-case here and
+            ;;        intercept any conflicting-symbol-names, and re-signal it
+            ;;        without the abort option.
 	    (import ()
 	      :report (lambda (stream)
 		        (format stream "Import ~S." symbol))
