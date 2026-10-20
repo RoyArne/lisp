@@ -87,6 +87,85 @@
         (is (eql s1 f1))
         (is (eql :inherited f1-status))))))
 
+(test export-signals-symbol-is-not-accessible
+  (with-packages (p1 p2)
+    (let ((s1 (ns:intern "s1")))
+      (signals ns:symbol-is-not-accessible (ns:export s1 "p2"))
+      (ns:intern "s1" p2)
+      (signals ns:symbol-is-not-accessible (ns:export s1 "p2")))))
+
+(test export-correcting-symbol-is-not-accessible-by-import
+  ;; Simple case of correcting by import when there are no conflicts.
+  (with-packages (p1 p2)
+    (let ((s1 (ns:intern "s1")))
+      (is-true (handler-bind ((ns:symbol-is-not-accessible
+                                #'(lambda (condition)
+                                    (invoke-restart (find-restart 'ns:import condition)))))
+                 (ns:export s1 "p2")))
+      (multiple-value-bind (s1-2 status)
+          (ns:find-symbol "s1" p2)
+        (is (eql s1 s1-2))
+        (is (eql :external status))))))
+
+(test export-signals-conflicting-symbol-names-during-import
+  ;; Verify that correcting by import signals conflicting-symbol-names.
+  (with-packages (p1 p2)
+    (let ((s1 (ns:intern "s1" p1))
+          (s2 (ns:intern "s1" p2)))
+      (signals ns:conflicting-symbol-names (handler-bind ((ns:symbol-is-not-accessible
+                                                            #'(lambda (condition)
+                                                                (invoke-restart (find-restart 'ns:import condition)))))
+                                             (ns:export s1 "p2")))
+      (multiple-value-bind (s1-2 status)
+          (ns:find-symbol "s1" p2)
+        (is (eql s2 s1-2))
+        (is (eql :internal status))))))
+
+(test export-correct-conflicting-symbol-names-by-unintern
+  ;; When using the import correction during symbol-is-not-accessible, we may
+  ;; have a conflicting-symbol-names condition with an :internal or :external
+  ;; symbol present in the exporting package. We can correct it by uninterning
+  ;; the conflicting symbol, then importing.
+  (with-packages (p1 p2)
+    (let ((s1 (ns:intern "s1" p1))
+          (s2 (ns:intern "s1" p2)))
+      (is-true (handler-bind ((ns:symbol-is-not-accessible
+                                #'(lambda (condition)
+                                    (invoke-restart (find-restart 'ns:import condition))))
+                              (ns:conflicting-symbol-names
+                                #'(lambda (condition)
+                                    (invoke-restart (find-restart 'ns:unintern condition)))))
+                 (ns:export s1 "p2")))
+      (multiple-value-bind (s1-exported status)
+          (ns:find-symbol "s1" p2)
+        (is (eql s1 s1-exported))
+        (is (eql :external status)))
+      (is-false (ns:symbol-package s2)))))
+
+(test export-correct-conflicting-symbol-names-by-shadow
+  ;; When using the import correction during symbol-is-not-accessible, we may
+  ;; have a conflicting-symbol-names condition with an :inherited symbol
+  ;; present in the exporting package. We can correct it by shdowing-importing the
+  ;; new symbol.
+  (with-packages (p1 p2 p3)
+    (let ((s1 (ns:intern "s1" p1))
+          (s3 (ns:intern "s1" p3)))
+      (is-true (ns:export s3 p3))
+      (is-true (ns:use-package p3 p2))
+      (is-true (handler-bind ((ns:symbol-is-not-accessible
+                                #'(lambda (condition)
+                                    (invoke-restart (find-restart 'ns:import condition))))
+                              (ns:conflicting-symbol-names
+                                #'(lambda (condition)
+                                    (invoke-restart (find-restart 'ns:shadow condition)))))
+                 (ns:export s1 p2)))
+      (multiple-value-bind (s1-exported status)
+          (ns:find-symbol "s1" p2)
+        (is (eql s1 s1-exported))
+        (is (eql :external status)))
+      (is-true (find s1 (ns:package-shadowing-symbols p2))))))
+  
+
 ;;; USE-PACKAGE
 ;;; ===========
 ;;;
