@@ -44,54 +44,56 @@ conflicting-symbol-names
 
   (:method ((symbol symbol) &optional (package *package*))
     (declare (type package-designator package))
-    (let* ((package (resolve-package-designator package *package*))
-	   (status (nth-value 1 (find-symbol (name symbol) package))))
+    (let* ((package (resolve-package-designator package *package*)))
+      (multiple-value-bind (found-symbol status)
+          (find-symbol (name symbol) package)
       
-      ;; Error if not accessible. Correctable by importing.
-      (when (null status)
-	(restart-case
-	    (error 'symbol-is-not-accessible
-		   :package package
-		   :context *package*
-		   :symbol symbol)
-	  (import ()
-	    :report (lambda (stream)
-		      (format stream "Import ~S." symbol))
-	    :test (lambda (condition)
-		    (typep condition 'symbol-is-not-accessible))
-	    (import symbol package)
-	    (setf status :internal))))
+        ;; Error if not accessible. Correctable by importing.
+        (when (or (null status)
+                  (not (eql symbol found-symbol)))
+	  (restart-case
+	      (error 'symbol-is-not-accessible
+		     :package package
+		     :context *package*
+		     :symbol symbol)
+	    (import ()
+	      :report (lambda (stream)
+		        (format stream "Import ~S." symbol))
+	      :test (lambda (condition)
+		      (typep condition 'symbol-is-not-accessible))
+	      (import symbol package)
+	      (setf status :internal))))
       
-      ;; Look for name conflicts in packages that uses
-      ;; package. Correctable by uninterning or shadowing the
-      ;; conflicting symbol.
-      (loop
-	for used-by in (used-by-list package)
-	do (multiple-value-bind (conflicting-symbol status)
-	       (find-present-symbol (name symbol) used-by)
-	     (unless (null status)
-	       (restart-case
-		   (error 'conflicting-symbol-names
-			  :package package
-			  :context *package*
-			  :symbol symbol
-			  :conflicting-symbol conflicting-symbol)
-		 (unintern ()
-		   :report (lambda (stream)
-			     (format stream "Unintern ~S." conflicting-symbol))
-		   :test (lambda (condition)
-			   (typep condition 'conflicting-symbol-names))
-		   (unintern conflicting-symbol (symbol-package conflicting-symbol)))
-		 (shadow ()
-		   :report (lambda (stream)
-			     (format stream "Shadow ~S." conflicting-symbol))
-		   :test (lambda (condition)
-			   (typep condition 'conflicting-symbol-names))
-		   (shadow conflicting-symbol (symbol-package conflicting-symbol)))))))
+        ;; Look for name conflicts in packages that uses
+        ;; package. Correctable by uninterning or shadowing the
+        ;; conflicting symbol.
+        (loop
+	  for used-by in (used-by-list package)
+	  do (multiple-value-bind (conflicting-symbol status)
+	         (find-present-symbol (name symbol) used-by)
+	       (unless (null status)
+	         (restart-case
+		     (error 'conflicting-symbol-names
+			    :package package
+			    :context *package*
+			    :symbol symbol
+			    :conflicting-symbol conflicting-symbol)
+		   (unintern ()
+		     :report (lambda (stream)
+			       (format stream "Unintern ~S." conflicting-symbol))
+		     :test (lambda (condition)
+			     (typep condition 'conflicting-symbol-names))
+		     (unintern conflicting-symbol (symbol-package conflicting-symbol)))
+		   (shadow ()
+		     :report (lambda (stream)
+			       (format stream "Shadow ~S." conflicting-symbol))
+		     :test (lambda (condition)
+			     (typep condition 'conflicting-symbol-names))
+		     (shadow conflicting-symbol (symbol-package conflicting-symbol)))))))
       
-      ;; Do the export.
-      (unless (eql status :external)
-	(add-external-symbol symbol package)
-	(when (eql status :internal)
-	  (remove-internal-symbol symbol package))))
+        ;; Do the export.
+        (unless (eql status :external)
+	  (add-external-symbol symbol package)
+	  (when (eql status :internal)
+	    (remove-internal-symbol symbol package)))))
     t))
