@@ -1,7 +1,4 @@
 ;;;; This is "namespace/src/package-interface/test-package-interface.lisp".
-;;;;
-;;;; TODO: test use-package on packages that don't exist.
-;;;;       test use-package on internal packages.
 
 (in-package #:test-namespace)
 
@@ -189,7 +186,6 @@
     (is (eql p4 (find p4 (ns:package-used-by-list p2))))
     (is (eql p4 (find p4 (ns:package-used-by-list p3))))))
 
-
 (test use-package-with-package-objects
   (with-packages (p1 p2 p3 p4)
     (is-true (ns:use-package p2))
@@ -240,6 +236,47 @@
                                   (invoke-restart (find-restart 'ns:take-new condition)))))
                (ns:use-package p1 p2)))
     (is (eql p1 (ns:symbol-package (ns:find-symbol "s1" p2))))))
+
+(test use-package-signals-package-does-not-exist
+  (with-packages (p1)
+    (signals ns:package-does-not-exist (ns:use-package "p2"))))
+
+(test use-package-signals-package-does-not-exist-on-non-visible-internal-package
+  (with-packages (p1 (p2 p3))
+    (signals ns:package-does-not-exist (ns:use-package "p3"))))
+
+(test use-package-top-level-using-internal-package
+  (with-packages ((p1 p2))
+    (is-true (ns:use-package "p2"))
+    (is (eql p2 (find p2 (ns:package-use-list p1))))
+    (is (eql p1 (find p1 (ns:package-used-by-list p2))))))
+
+(test use-package-internal-using-lower-level-packages
+  (with-packages ((p1 (p2 p3 p4)))
+    (setf ns:*package* p2)
+    (is-true (ns:use-package (list p3 p4)))
+    (is (eql p3 (find p3 (ns:package-use-list p2))))
+    (is (eql p2 (find p2 (ns:package-used-by-list p3))))
+    (is (eql p4 (find p4 (ns:package-use-list p2))))
+    (is (eql p2 (find p2 (ns:package-used-by-list p4))))))
+
+(test use-package-internal-using-higher-level-packages
+  (with-packages ( p1
+                  (p2 (p3  p4)
+                       p5)
+                   p6)
+    (setf ns:*package* p4) ; visible = (p4 p5 p3 p1 p2 p6), all are higher level
+    (is-true (ns:use-package (list p1 p3 p5 "p6" "p2")))
+    (is (eql p1 (find p1 (ns:package-use-list p4))))
+    (is (eql p2 (find p2 (ns:package-use-list p4))))
+    (is (eql p3 (find p3 (ns:package-use-list p4))))
+    (is (eql p5 (find p5 (ns:package-use-list p4))))
+    (is (eql p6 (find p6 (ns:package-use-list p4))))
+    (is (eql p4 (find p4 (ns:package-used-by-list p1))))
+    (is (eql p4 (find p4 (ns:package-used-by-list p2))))
+    (is (eql p4 (find p4 (ns:package-used-by-list p3))))
+    (is (eql p4 (find p4 (ns:package-used-by-list p5))))
+    (is (eql p4 (find p4 (ns:package-used-by-list p6))))))
 
 
 ;;; UNUSE-PACKAGE
