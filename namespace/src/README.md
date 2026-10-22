@@ -47,11 +47,11 @@ particular module. The modules are:
  └┬─┘               └┬─┘  └┬─┘        └┬─┘ └──┘
 ─ ├──────┐ ─ ─ ─ ─ ─ │ ─ ─ ├─────┐ ─ ─ ├──────┬─────┐ ─ ─ ─ ─ ─  ─────────────
  ┌┴──┐  ┌┴──┐       ┌┴──┐ ┌┴──┐ ┌┴──┐ ┌┴──┐  ┌┴──┐ ┌┴──┐
- │aaa│  │aab│       │aba│ │aca│ │acb│ │bba│  │bbb│ │bbc│          ← internal
+ │aaa│  │aab│       │aba│ │aca│ │acb│ │baa│  │bab│ │bac│          ← internal
  └┬──┘  └┬──┘       └───┘ └───┘ └───┘ └┬──┘  └┬──┘ └───┘
 ─ │ ─ ─  ├──────┬──────┐ ─ ─ ─ ─ ─ ─ ─ │ ─ ─  ├──────┐ ─ ─ ─ ─ ─ ─────────────
  ┌┴───┐ ┌┴───┐ ┌┴───┐ ┌┴───┐          ┌┴───┐ ┌┴───┐ ┌┴───┐
- │aaaa│ │aaba│ │aabb│ │aabc│          │bbaa│ │bbba│ │bbbb│        ← internal
+ │aaaa│ │aaba│ │aabb│ │aabc│          │baaa│ │baba│ │babb│        ← internal
  └────┘ └────┘ └────┘ └────┘          └────┘ └────┘ └────┘
 ──────────────────────────────────────────────────────────────────────────────
                     Above: A sample package hierarchy.
@@ -95,16 +95,23 @@ Using the sample above:
 
 ### Visible Packages
 
-As seen above, **list-all-packages* does not return every package in
+As seen above, **list-all-packages** does not return every package in
 the system; only __visible__ packages are returned: Given a package
 _p_, the visible packages are the concatenation of:
 
-- the packages internal list, and the peer list of each of its direct
+- its internal list, and the peer list of each of its direct
   ancestors.
 
-Let the current package, be aab:
+Let the current package be aab:
 
 - (**list-all-packages**) → (aabc aabb aaba aab aaa ac ab aa a b c)
 
 meaning that **list-all-packages** looks one level down from the
 current package, and then up and to the sides of every level above.
+
+### Finding Packages
+
+- (**find-package** "ac") → #<PACKAGE ac>
+
+  returns a visible package with the given name, or a locally
+  nicknamed package with that name.
