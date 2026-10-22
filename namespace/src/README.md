@@ -111,7 +111,7 @@ current package, and then up and to the sides of every level above.
 
 ### Finding Packages
 
-- (**find-package** "ac") → #<PACKAGE ac>
+- (**find-package** "ac") → \#\<PACKAGE ac\>
 
   returns a visible package with the given name, or a locally
   nicknamed package with that name.
