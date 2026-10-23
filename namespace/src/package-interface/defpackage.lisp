@@ -79,6 +79,10 @@
                 home-option)
 
          (ftype (function (list)
+                          boolean)
+                home-option?)
+
+         (ftype (function (list)
                           (values (or null integer) boolean))
                 size-option))
 
@@ -89,7 +93,7 @@
   ;; present), the second is t if a value was present, and nil if not.
   (let ((option (mapcan-option name options)))
     (if (not (cdr option))
-        (values (option-name option) (not (null option)))
+        (values (first option) (not (null option)))
         (error 'type-error
 	       :datum (cons name option)
 	       :expected-type (list name 'defpackage-option)
@@ -103,6 +107,9 @@
       (at-most-one-of :home options)
     (values (when home (resolve-string-designator home))
             present?)))
+
+(defun home-option? (options)
+  (nth-value 1 (home-option options)))
 
 (defun size-option (options)
   ;; (:size integer), at most one
@@ -187,9 +194,7 @@
 (defun expand-defpackage-form (name options)
   (let ((package (common-lisp:gensym "PACKAGE"))
 	(resolved-name (common-lisp:gensym "NEW-NAME"))
-	(home-supplied? (common-lisp:gensym "HOME-SUPPLIED?"))
-        (home-option (common-lisp:gensym "HOME-OPTION"))
-	(home-package (common-lisp:gensym "HOME"))
+	(home-package (common-lisp:gensym "HOME-PACKAGE"))
         (nicknames (common-lisp:gensym "NICKNAMES"))
 	(string (common-lisp:gensym "STRING"))
 	(strings (common-lisp:gensym "STRINGS")))
@@ -200,11 +205,9 @@
        ;;                      given package means use it as the home package,
        ;;                      given nil means make a top level package.
        (let* ((,resolved-name ,(resolve-string-designator name))
-              (,home-package (multiple-value-bind (,home-option ,home-supplied?)
-                                 ,(home-option options)
-                               (if ,home-supplied?
-                                   (resolve-home-designator ,home-option)
-                                   (home-package *package*))))
+              (,home-package (resolve-home-designator ,(if (home-option? options)
+                                                           (home-option options)
+                                                           '(home-package *package*))))
               (,package (or (find-conflicting-package ,resolved-name ,home-package)
                             (make-instance 'package))))
 
