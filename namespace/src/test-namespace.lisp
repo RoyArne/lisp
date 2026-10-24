@@ -26,47 +26,6 @@
                            (cl:symbol (string-downcase (symbol-name name))))))
     package))
 
-;; (defun make-internal-packages (home list)
-;;   (loop with new = (new-package home)
-;;         for elt in list
-;;         do (ns::add-internal-package (etypecase elt
-;;                                        (symbol  (new-package elt))
-;;                                        (list (make-internal-packages (first elt) (rest elt))))
-;;                                      new)
-;;         finally (return new)))
-
-;; (defun make-top-level-packages (list)
-;;   (loop for elt in list
-;;         collect (etypecase elt
-;;                   (symbol (new-package elt))
-;;                   (list (make-internal-packages (first elt) (rest elt))))))
-
-;; (defun make-packages (list)
-;;   (make-top-level-packages list))
-
-;; (defmacro with-packages ((&rest packages) &body body)
-;;   "Evaluate BODY with PACKAGES created.
-
-;; \(with-packages \(\(pk1 pk2 pk3\)
-;;                 pk4
-;;                 pk5
-;;                 \(pk6 \(pk7 pk8\) \(pk9 \(pk10 pk11\)\)\)\)
-;;   do-stuff\)
-
-;; Creates the top-level packages pk1, pk4, pk5 and pk6. pk1 will have two
-;; internal packages, pk2 and pk3. pk6 will have two internal packages, pk7 and
-;; pk8. pk9 will have pk10 as an internal package, which has pk11 as an internal
-;; package:
-
-;;   *packages* pk1     pk4 pk5 pk6     pk9
-;;              pk2 pk3         pk7 pk8 pk10
-;;                                      pk11
-
-;;   *package* is set to pk1."
-;;   `(let* ((ns::*packages* (make-packages ',packages))
-;;           (ns::*package* (first ns::*packages*)))
-;;      ,@body))
-
 (defmacro with-packages ((&rest packages) &body body)
   "Evaluate BODY with PACKAGES created and bound."
   (labels ((walk (spec parent-var)

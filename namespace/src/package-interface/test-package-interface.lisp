@@ -41,6 +41,9 @@
   (with-packages (p1 (p2 p3))
     (signals ns:package-does-not-exist (ns:in-package "p3"))))
 
+;;; LIST-ALL-PACKAGES and LIST-PEER-PACKAGES
+;;; ========================================
+
 
 ;;; INTERN, EXPORT and SYMBOL-PACKAGE
 ;;; =================================
@@ -377,7 +380,6 @@
     (let ((nickname (string:string "nickname")))
       (is (eql p1 (ns:add-package-local-nickname nickname p2 p1)))
       (signals ns:conflicting-package-names (ns:add-package-local-nickname nickname p3 p1)))))
-    
 
 (test remove-package-local-nickname
   (with-packages (p1 p2)
@@ -387,6 +389,13 @@
       (is-true (ns:remove-package-local-nickname nickname))
       (is-false (ns:find-package nickname))
       (is-false (ns:remove-package-local-nickname nickname)))))
+
+(test local-nicknames-take-precedence-over-package-names
+  (with-packages (p1 p2 p3)
+    (is (eql p3 (ns:add-package-local-nickname "p2" "p1" p3)))
+    (is (eql p2 (ns:find-package "p2")))
+    (setf ns:*package* p3)
+    (is (eql p1 (ns:find-package "p2")))))
 
 ;;; FIND-PACKAGE
 ;;; ============
@@ -405,3 +414,149 @@
     (is (eql p2 (ns:find-package "p2")))
     (is (eql p2 (ns:in-package "p2")))
     (is (eql p3 (ns:find-package "p3")))))
+
+;;; DEFPACKAGE
+;;; ==========
+
+(test defpackage-no-options
+  (with-packages (p1)
+    (let ((p2 (ns:defpackage "p2")))
+      (is-true (typep p2 'ns:package))
+      (is (eql p2 (ns:find-package "p2")))
+      (is (eql p2 (find p2 ns:*packages*)))
+      (is-true (null (ns:package-package p2))))))
+
+(test defpackagage-works-on-existing-package
+  (with-packages (p1)
+    (let ((p1-2 (ns:defpackage "p1")))
+      (is (eql p1 p1-2))
+      (is (eql p1 (find p1-2 ns:*packages*))))))
+
+(test defpackage-placed-in-home-package-of-current-package
+  ;; technically, defpackage-no-options test for this, but we'll make sure it
+  ;; works when current package is an internal one.
+  (with-packages ((p1 p2))
+    (setf ns:*package* p2)
+    (let ((p3 (ns:defpackage "p3")))
+      (is (eql p1 (ns:package-package p3)))
+      (is (eql p3 (find p3 (ns:package-internal-list p1))))
+      (is (eql p1 (find p1 (ns:package-internal-to-list p3)))))))
+
+(test defpackage-placed-in-specified-home-package
+  (with-packages ((p1 p2))
+    (let ((p3 (ns:defpackage "p3"
+                (:home "p2"))))
+      (is (eql p2 (ns:package-package p3)))
+      (is (eql p3 (find p3 (ns:package-internal-list p2))))
+      (is (eql p2 (find p2 (ns:package-internal-to-list p3)))))))
+
+(test defpackage-placed-in-specified-top-level
+  (with-packages ((p1 p2))
+    (let ((p3 (ns:defpackage "p3"
+                (:home nil))))
+      (is-true (null (ns:package-package p3)))
+      (is (eql p3 (find p3 ns:*packages*)))
+      (is-true (null (ns:package-internal-to-list p3))))))
+
+;; This gives a compile error (which it should). FIXME: Not sure how it should be tested.
+;; (test defpackage-wont-accept-multiple-home-options
+;;   (with-packages ((p1 p2))
+;;     (signals type-error (ns:defpackage "p3"
+;;                           (:home "p1")
+;;                           (:home "p2")))))
+
+(test defpackage-uses-package
+  ;; The :use option operates by calling use-package, which is tested above.
+  (with-packages (p1)
+    (let ((p2 (ns:defpackage "p2"
+                (:use "p1"))))
+      (is (eql p1 (find p1 (ns:package-use-list p2))))
+      (is (eql p2 (find p2 (ns:package-used-by-list p1))))
+      (let ((p3 (ns:defpackage "p3"
+                  (:use "p1" "p2"))))
+        (is (eql p1 (find p1 (ns:package-use-list p3))))
+        (is (eql p3 (find p3 (ns:package-used-by-list p1))))
+        (is (eql p2 (find p2 (ns:package-use-list p3))))
+        (is (eql p3 (find p3 (ns:package-used-by-list p2))))))
+    ;; Finally make sure :use with no parameters is ok.
+    (is-true (typep (ns:defpackage "p4"
+                      (:use))
+                    'ns:package))))
+      
+(test defpackage-use-signals-package-does-not-exist
+  (with-packages (p1)
+    (signals ns:package-does-not-exist (ns:defpackage "p2"
+                                         (:use "p3")))))
+
+(test defpackage-assigns-local-nicknames
+  (with-packages (p1 p2)
+    (let ((p3 (ns:defpackage "p3"
+                (:local-nicknames ("pkg1" "p1")
+                                  ("pkg2" "p2")))))
+      (setf ns:*package* p3)
+      (is (eql p1 (ns:find-package "pkg1")))
+      (is (eql p2 (ns:find-package "pkg2"))))))
+
+(test defpackage-allows-empty-shadow-option
+  (with-packages (p1)
+    (is-true (typep (ns:defpackage "p2"
+                      (:shadow))
+                    'ns:package))))
+
+(test defpackage-adds-shadowing-symbols
+  (with-packages (p1)
+    (let ((p2 (ns:defpackage "p2"
+                (:shadow "test" "abc" "def"))))
+      (setf ns:*package* p2)
+      (eql :internal (nth-value 1 (ns:find-symbol "test")))
+      (eql :internal (nth-value 1 (ns:find-symbol "abc")))
+      (eql :internal (nth-value 1 (ns:find-symbol "def")))
+      (is (eql (ns:find-symbol "abc")
+               (find (ns:find-symbol "abc") (ns:package-shadowing-symbols p2)))))))
+
+(test defpackage-allows-shadowing-import-from-option-with-package-and-no-symbols
+  (with-packages (p1)
+    (is-true (typep (ns:defpackage "p2"
+                      (:shadowing-import-from "p1"))
+                    'ns:package))))
+
+(test defpackage-shadowing-imports-symbols
+  (with-packages (p1)
+    (let ((a (ns:intern "a" p1))
+          (b (ns:intern "b" p1))
+          (c (ns:intern "c" p1)))
+      (is-true (ns:export (list a b c) p1))
+      (let ((p2 (ns:defpackage "p2"
+                  (:shadowing-import-from "p1" "a" "b" "c"))))
+        (setf ns:*package* p2)
+        (is (eql a (ns:find-symbol "a")))
+        (is (eql b (ns:find-symbol "b")))
+        (is (eql c (ns:find-symbol "c")))
+        (is (eql a (find a (ns:package-shadowing-symbols p2))))
+        (is (eql b (find b (ns:package-shadowing-symbols p2))))
+        (is (eql c (find c (ns:package-shadowing-symbols p2))))))))
+
+(test defpackage-shadowing-import-signals-symbol-is-not-accessible 
+  (with-packages (p1)
+    (signals ns:symbol-is-not-accessible (ns:defpackage "p2"
+                                           (:shadowing-import-from "p1" "a")))))
+ 
+                   
+
+(test defpackage-allows-import-from-option-with-package-and-no-symbols
+  (with-packages (p1)
+    (is-true (typep (ns:defpackage "p2"
+                      (:import-from "p1"))
+                    'ns:package))))
+
+(test defpackage-allows-empty-intern-option
+  (with-packages (p1)
+    (is-true (typep (ns:defpackage "p2"
+                      (:intern))
+                    'ns:package))))
+
+(test defpackage-allows-empty-export-option
+  (with-packages (p1)
+    (is-true (typep (ns:defpackage "p2"
+                      (:export))
+                    'ns:package))))
