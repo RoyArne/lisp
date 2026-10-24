@@ -10,12 +10,20 @@
   (restart-case
       (cond
         ((string= nickname (name package))
+         ;; It is an error to use nicknames that are the same as the name of
+         ;; the package that is adding the nicknamed package.
          (error 'conflicting-package-names
 		:package package
 		:context package
 		:name nickname
 		:message "~S names ~S when adding a local nickname to ~S."))
         ((find-local-nickname nickname package)
+         ;; It is an error to give two different packages the same nickname.
+         ;; CONSIDER: what if the older nicknamed package is the same that
+         ;;           we're giving a nickname now? i.e
+         ;;           (eql actual-package (find-local-nickname …).
+         ;;           should we allow this? if so we need to take care to not
+         ;;           add an extra entry for the same package.
 	 (error 'conflicting-package-names
 		:package (rest (find-local-nickname nickname package))
 		:context package
@@ -46,6 +54,9 @@ Makes local-nickname available as a package prefix for actual-package
 from inside package.
 
 Returns the package object where local-nickname is available.
+
+Note:
+Local nicknames takes precedence over package names.
 
 Exceptional Situations:
 Signals an error of type type-error if package is not a package
