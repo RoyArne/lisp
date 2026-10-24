@@ -39,7 +39,13 @@ conflicting-symbol-names
     (declare (type package-designator package))
     (loop with package =  (resolve-package-designator package *package*)
 	  for symbol in symbols
+          if (typep symbol 'symbol)
 	  do (export symbol package)
+          else
+          do (error 'type-error
+                    :datum symbol
+                    :expected-type 'symbol
+                    :datum "during export")
           finally (return t)))
 
   (:method ((symbol symbol) &optional (package *package*))

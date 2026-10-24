@@ -36,7 +36,13 @@ that it must be uninterned if it was present in package.")
     (declare (type package-designator package))
     (loop with package = (resolve-package-designator package *package*)
 	  for new-symbol in symbols
+          if (typep new-symbol 'symbol)
 	  do (shadowing-import new-symbol package)
+          else
+          do (error 'type-error
+                    :datum new-symbol
+                    :expected-type 'symbol
+                    :datum "during shadowing-import")
           finally (return t)))
 
   (:method ((new-symbol symbol) &optional (package *package*))

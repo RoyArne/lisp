@@ -55,7 +55,13 @@ the conflict is with a shadowing symbol of the package.")
     (declare (type package-designator package))
     (loop with package = (resolve-package-designator package *package*)
 	  for new-symbol in symbols
+          if (typep new-symbol 'symbol)
 	  do (import new-symbol package)
+          else
+          do (error 'type-error
+                    :datum new-symbol
+                    :expected-type 'symbol
+                    :datum "during import")
           finally (return t)))
 
   (:method ((new-symbol symbol) &optional (package *package*))
