@@ -201,7 +201,10 @@
 	(home-package (common-lisp:gensym "HOME-PACKAGE"))
         (nicknames (common-lisp:gensym "NICKNAMES"))
 	(string (common-lisp:gensym "STRING"))
-	(strings (common-lisp:gensym "STRINGS")))
+	(strings (common-lisp:gensym "STRINGS"))
+        (import-from-package (common-lisp:gensym "IMPORT-FROM-PACKAGE"))
+        (symbol (common-lisp:gensym "SYMBOL"))
+        (status (common-lisp:gensym "STATUS")))
     `(eval-when (:compile-toplevel :load-toplevel :execute)
 
        (let* ((,resolved-name ,(resolve-string-designator name))
@@ -246,14 +249,34 @@
 	 ;; 1. :shadow and :shadowing-import-from.
          (shadow ',(shadow-option options) ,package)
          (loop for ,strings in ',(shadowing-import-from-options options)
-               do (shadowing-import (rest ,strings) (first ,strings)))
+               do (let ((,import-from-package (resolve-package-designator (first ,strings))))
+                    (shadowing-import (loop for ,string in (rest ,strings)
+                                            collect (multiple-value-bind (,symbol ,status)
+                                                        (find-symbol ,string ,import-from-package)
+                                                      (if (null ,status)
+                                                          (error 'symbol-is-not-accessible
+                                                                 :symbol ,string
+                                                                 :package ,import-from-package
+                                                                 :context ,package)
+                                                          ,symbol)))
+                                    ,package)))
 	 
 	 ;; 2. :use.
          (use-package ',(use-option options) ,package)
 
 	 ;; 3. :import-from and :intern.
          (loop for ,strings in ',(import-from-options options)
-               do (import (rest ,strings) (first ,strings)))
+               do (let ((,import-from-package (resolve-package-designator (first ,strings))))
+                    (import (loop for ,string in (rest ,strings)
+                                  collect (multiple-value-bind (,symbol ,status)
+                                              (find-symbol ,string ,import-from-package)
+                                            (if (null ,status)
+                                                (error 'symbol-is-not-accessible
+                                                       :symbol ,string
+                                                       :package ,import-from-package
+                                                       :context ,package)
+                                                ,symbol)))
+                            ,package)))
          (loop for ,string in ',(intern-option options)
                do (intern ,string ,package))
          
