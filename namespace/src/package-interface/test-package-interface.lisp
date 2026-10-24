@@ -540,8 +540,6 @@
   (with-packages (p1)
     (signals ns:symbol-is-not-accessible (ns:defpackage "p2"
                                            (:shadowing-import-from "p1" "a")))))
- 
-                   
 
 (test defpackage-allows-import-from-option-with-package-and-no-symbols
   (with-packages (p1)
@@ -549,14 +547,52 @@
                       (:import-from "p1"))
                     'ns:package))))
 
+(test defpackage-imports-symbols
+  (with-packages (p1)
+    (let ((a (ns:intern "a" p1))
+          (b (ns:intern "b" p1))
+          (c (ns:intern "c" p1)))
+      (is-true (ns:export (list a b c) p1))
+      (let ((p2 (ns:defpackage "p2"
+                  (:import-from "p1" "a" "b" "c"))))
+        (setf ns:*package* p2)
+        (is (eql a (ns:find-symbol "a")))
+        (is (eql b (ns:find-symbol "b")))
+        (is (eql c (ns:find-symbol "c")))))))
+
+(test defpackage-import-signals-symbol-is-not-accessible 
+  (with-packages (p1)
+    (signals ns:symbol-is-not-accessible (ns:defpackage "p2"
+                                           (:import-from "p1" "a")))))
+
 (test defpackage-allows-empty-intern-option
   (with-packages (p1)
     (is-true (typep (ns:defpackage "p2"
                       (:intern))
                     'ns:package))))
 
+(test defpackage-interns-symbols
+  (with-packages (p1)
+    (let ((p2 (ns:defpackage "p2"
+                (:intern "a" "b" "c"))))
+      (setf ns:*package* p2)
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "a")
+        (is (eql p2 (ns:symbol-package symbol)))
+        (is (eql :internal status))))))
+
 (test defpackage-allows-empty-export-option
   (with-packages (p1)
     (is-true (typep (ns:defpackage "p2"
                       (:export))
                     'ns:package))))
+
+(test defpackage-exports-symbols
+  (with-packages (p1)
+    (let ((p2 (ns:defpackage "p2"
+                (:export "a" "b" "c"))))
+      (setf ns:*package* p2)
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "a")
+        (is (eql p2 (ns:symbol-package symbol)))
+        (is (eql :external status))))))
