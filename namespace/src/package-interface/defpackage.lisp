@@ -80,7 +80,8 @@
 
          (ftype (function (list)
                           boolean)
-                home-option?)
+                home-option?
+                size-option?)
 
          (ftype (function (list)
                           (values (or null integer) boolean))
@@ -122,6 +123,9 @@
                :expected-type (list :size 'defpackage-option)
                :context "which allows exactly one integer value.")))
     (values size present?)))
+
+(defun size-option? (options)
+  (nth-value 1 (size-option options)))
 
 
 (declaim (ftype (function (list)
@@ -200,14 +204,10 @@
 	(strings (common-lisp:gensym "STRINGS")))
     `(eval-when (:compile-toplevel :load-toplevel :execute)
 
-       ;; Re. Home Resolution: omitted means make a peer package of the
-       ;;                      current package,
-       ;;                      given package means use it as the home package,
-       ;;                      given nil means make a top level package.
        (let* ((,resolved-name ,(resolve-string-designator name))
               (,home-package (resolve-home-designator ,(if (home-option? options)
-                                                           (home-option options)
-                                                           '(home-package *package*))))
+                                                           (home-option options)        ; supplied, use the supplied value
+                                                           '(home-package *package*)))) ; not supplied, home of *package*
               (,package (or (find-conflicting-package ,resolved-name ,home-package)
                             (make-instance 'package))))
 
@@ -234,7 +234,7 @@
             (add-package ,package ,home-package)))
 
          ;; Next we resolve the local nicknames.
-         (loop for ,nicknames in ,(local-nicknames-options options)
+         (loop for ,nicknames in ',(local-nicknames-options options)
                do (add-package-local-nickname (first ,nicknames)
                                               (resolve-package-designator (second ,nicknames))
                                               ,package))
@@ -267,6 +267,194 @@
 	   
 	 ,package))))
 
+
+;; defpackage defined-package-name [[option]] => package
+
+;; option::= (:nicknames nickname*)* |  
+;;           (:documentation string) |  
+;;           (:use package-name*)* |  
+;;           (:shadow {symbol-name}*)* |  
+;;           (:shadowing-import-from package-name {symbol-name}*)* |  
+;;           (:import-from package-name {symbol-name}*)* |  
+;;           (:export {symbol-name}*)* |  
+;;           (:intern {symbol-name}*)* |  
+;;           (:size integer) 
+
 (defmacro defpackage (name &rest options)
+  "Syntax:
+\(defpackage name &rest options\) → package
+
+Arguments and Values:
+name—a string designator.
+package—a package object named package-name.
+
+Description:
+Creates a package named name and returns it. If name refers to an existing
+package, that package is returned. If the new definition differs from the
+current state of that package, the existing package is modified to reflect the
+new definition.
+
+Option Arguments:
+string—a string.
+package-name—a string designator.
+symbol-name—a string designator.
+
+\(:documentation string\)
+
+    At most one :documentation option can appear. Its argument is a string
+    that is attached as the packages documentation string.
+
+\(:use package-name*\)
+
+    Zero or more :use options can appear, each naming zero or more
+    packages. The new package will inherit symbols from each named package as
+    if by use-package.
+
+\(:shadow symbol-name*\)
+
+    Zero or more :shadow options can appear, each naming zero or more
+    symbols. Each named symbol is created and added to the packages list of
+    shadowing symbols as if by shadow.
+
+\(:shadowing-import-from package-name symbol-name*\)
+
+    Zero or more :shadowing-import-from options can appear. If the option
+    names anything, it must be a package followed by zero or more symbols. The
+    named symbols are imported from the named package as if by
+    shadowing-import.
+
+\(:import-from package-name symbol-name*\)
+
+    Zero or more :import-from options can appear. If the option names
+    anything, it must be a package followed by zero or more symbols. The named
+    symbols are imported from the named package as if by import.
+
+\(:export symbol-name*\)
+
+    Zero or more :export options can appear, each naming zero or more
+    symbols. Each named symbol is added to the packages list of external
+    symbols.
+
+    The :export option can interact with the :shadowing-import-from and
+    :import-from options such that imported symbols are used rather than new
+    symbols being created. If a named symbol is inherited (through the
+    :use-package option), the named symbol is imported and then exported from
+    the package being defined.
+
+    The exported symbols are added to the new packages external symbols.
+
+\(:intern symbol-name*\)
+
+    Zero or more :import options can appear, each naming zero or more
+    symbols. The named symbols are found or created in the new package. The
+    :intern option interacts with the :use option such that inherited symbols
+    can be used rather than new ones created.
+
+The order in which the options appear in a defpackage form is irrelevant. The
+order in which they are executed is as follows:
+
+1. :shadow and :shadowing-import-from.
+2. :use.
+3. :import-from and :intern.
+4. :export.
+
+Shadows are established first, since they might be necessary to block spurious
+name conflicts when the :use option is processed. The :use option is executed
+next so that :intern and :export options can refer to normally inherited
+symbols. The :export option is executed last so that it can refer to symbols
+created by any of the other options; in particular, shadowing symbols and
+imported symbols can be made external.
+
+If a defpackage form appears as a top level form, all of the actions normally
+performed by this macro at load time must also be performed at compile time.
+
+Examples:
+
+ (defpackage \"MY-PACKAGE\"
+   (:nicknames \"MYPKG\" \"MY-PKG\")
+   (:use \"COMMON-LISP\")
+   (:shadow \"CAR\" \"CDR\")
+   (:shadowing-import-from \"VENDOR-COMMON-LISP\"  \"CONS\")
+   (:import-from \"VENDOR-COMMON-LISP\"  \"GC\")
+   (:export \"EQ\" \"CONS\" \"FROBOLA\")
+   )
+ 
+ 
+ (defpackage my-package
+   (:nicknames mypkg :MY-PKG)  ; remember Common Lisp conventions for case
+   (:use common-lisp)          ; conversion on symbols
+   (:shadow CAR :cdr #:cons)                              
+   (:export \"CONS\")            ; this is the shadowed one.
+   )
+
+Affected By:
+
+Existing packages.
+
+Exceptional Situations:
+
+If one of the supplied :nicknames already refers to an existing package, an
+error of type package-error is signaled.
+
+An error of type program-error should be signaled if :size or :documentation
+appears more than once.
+
+Since implementations might allow extended options an error of type
+program-error should be signaled if an option is present that is not actually
+supported in the host implementation.
+
+The collection of symbol-name arguments given to the options :shadow, :intern,
+:import-from, and :shadowing-import-from must all be disjoint; additionally,
+the symbol-name arguments given to :export and :intern must be
+disjoint. Disjoint in this context is defined as no two of the symbol-names
+being string= with each other. If either condition is violated, an error of
+type program-error should be signaled.
+
+For the :shadowing-import-from and :import-from options, a correctable error
+of type package-error is signaled if no symbol is accessible in the package
+named by package-name for one of the argument symbol-names.
+
+Name conflict errors are handled by the underlying calls to make-package,
+use-package, import, and export. See Section 11.1 (Package Concepts).
+
+See Also:
+
+documentation, Section 11.1 (Package Concepts), Section 3.2 (Compilation)
+
+Notes:
+
+The :intern option is useful if an :import-from or a :shadowing-import-from
+option in a subsequent call to defpackage (for some other package) expects to
+find these symbols accessible but not necessarily external.
+
+It is recommended that the entire package definition is put in a single place,
+and that all the package definitions of a program are in a single file. This
+file can be loaded before loading or compiling anything else that depends on
+those packages. Such a file can be read in the COMMON-LISP-USER package,
+avoiding any initial state issues.
+
+defpackage cannot be used to create two ``mutually recursive'' packages, such
+as:
+
+ (defpackage my-package
+   (:use common-lisp your-package)    ;requires your-package to exist first
+   (:export \"MY-FUN\"))                
+ (defpackage your-package
+   (:use common-lisp)
+   (:import-from my-package \"MY-FUN\") ;requires my-package to exist first
+   (:export \"MY-FUN\"))
+
+However, nothing prevents the user from using the package-affecting functions
+such as use-package, import, and export to establish such links after a more
+standard use of defpackage.
+
+The macroexpansion of defpackage could usefully canonicalize the names into
+strings, so that even if a source file has random symbols in the defpackage
+form, the compiled file would only contain strings.
+
+Frequently additional implementation-dependent options take the form of a
+keyword standing by itself as an abbreviation for a list (keyword T); this
+syntax should be properly reported as an unrecognized option in
+implementations that do not support it."
   (mapc 'check-defpackage-option options)
   (expand-defpackage-form name options))
