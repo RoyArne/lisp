@@ -210,7 +210,7 @@
            #:package-internal-list            ; Function (implemented)
            #:package-internal-to-list         ; Function (implemented)
            #:package-package                  ; Function (implemented)
-           #:package-symbol-eror              ; Condition Type (implemented)
+           #:package-symbol-error             ; Condition Type (implemented)
            #:symbol-is-not-accessible         ; Condition Type (implemented)
            #:*keyword*                        ; Variable (implemented)
            #:*lisp*                           ; Variable (implemented)
