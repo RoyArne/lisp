@@ -209,9 +209,9 @@ subsytem or function. It needs to setup the variables \*packages\*,
 
 - [x] **list-peer-packages** (Function)
 
-- [ ] **package-internal-list** (Function)
+- [x] **package-internal-list** (Function)
 
-- [ ] **package-internal-to-list** (Function)
+- [x] **package-internal-to-list** (Function)
 
 - [ ] **package-package** (Function)
 

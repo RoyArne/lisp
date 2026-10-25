@@ -41,6 +41,7 @@
   (with-packages (p1 (p2 p3))
     (signals ns:package-does-not-exist (ns:in-package "p3"))))
 
+
 ;;; LIST-ALL-PACKAGES and LIST-PEER-PACKAGES
 ;;; ========================================
 
@@ -67,6 +68,51 @@
                   p6)
     (setf ns:*package* p4)
     (is-true (every 'eql (list p4 p2) (ns:list-peer-packages)))))
+
+
+;;; PACKAGE-INTERNAL-LIST and PACKAGE-INTERNAL-TO-LIST
+;;; ==================================================
+
+(test internal-list-at-top-level-without-internal-packages
+  (with-packages (p1)
+    (is-true (null (ns:package-internal-list p1)))))
+
+(test internal-to-list-at-top-level-without-internal-packages
+  (with-packages (p1)
+    (is-true (null (ns:package-internal-to-list p1)))))
+
+(test internal-list-at-top-level-with-internal-packages
+  (with-packages ((p1 p2))
+    (is-true (every 'eql (list p2) (ns:package-internal-list p1)))))
+
+(test internal-to-list-at-top-level-with-internal-packages
+  (with-packages ((p1 p2))
+    (is-true (null (ns:package-internal-to-list p1)))))
+
+(test internal-list-at-internal-levels-without-internal-packages
+  (with-packages ((p1 p2))
+    (is-true (null (ns:package-internal-list p2)))))
+
+(test internal-to-list-at-internal-levels-without-internal-packages
+  (with-packages ((p1 p2))
+    (is-true (every 'eql (list p1) (ns:package-internal-to-list p2)))))
+
+(test internal-list-at-internal-levels-with-internal-packages
+  (with-packages ((p1 (p2 p3)))
+    (is-true (every 'eql (list p3) (ns:package-internal-list p2)))))
+
+(test internal-to-list-at-internal-levels-with-internal-packages
+  (with-packages ((p1 (p2 p3)))
+    (is-true (every 'eql (list p1) (ns:package-internal-to-list p2)))))
+
+(test longer-internal-list-at-internal-levels
+  (with-packages ((p1 (p2 p3 p4 p5)))
+    (is-true (every 'eql (list p5 p4 p3) (ns:package-internal-list p2)))))
+
+(test longer-internal-to-list-at-internal-levels
+  (with-packages ((p1 (p2 (p3 (p4 p5)))))
+    (is-true (every 'eql (list p4 p3 p2 p1) (ns:package-internal-to-list p5)))))
+
 
 ;;; INTERN, EXPORT and SYMBOL-PACKAGE
 ;;; =================================
