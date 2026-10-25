@@ -108,7 +108,7 @@ implementation, but tests are not complete yet.
 
 - [x] **intern** (Function)
 
-- [ ] **package-name** (Function)
+- [x] **package-name** (Function)
 
 - [x] ~~package-nicknames~~ (Function) (**will NOT implement**)
 
@@ -131,9 +131,9 @@ implementation, but tests are not complete yet.
 
 - [ ] **package-shadowing-symbols** (Function)
 
-- [ ] **package-use-list** (Function)
+- [x] **package-use-list** (Function)
 
-- [ ] **package-used-by-list** (Function)
+- [x] **package-used-by-list** (Function)
 
 - [x] ~~packagep~~ (Function) (**implementing as package?**)
 
@@ -213,7 +213,7 @@ subsytem or function. It needs to setup the variables \*packages\*,
 
 - [x] **package-internal-to-list** (Function)
 
-- [ ] **package-package** (Function)
+- [x] **package-package** (Function)
 
 - [ ] **\*keyword\*** (Variable)
 
@@ -225,6 +225,9 @@ subsytem or function. It needs to setup the variables \*packages\*,
   package named "lisp".
 
 - [ ] **\*packages\*** (Variable)
+
+  When it comes to internal functionality, this works as expected. But
+  it does not have the restrictions I would like for external users.
 
   The top-level list of packages is defined as a list for now. It
   **really** needs to be a list of packages, and I need a type system

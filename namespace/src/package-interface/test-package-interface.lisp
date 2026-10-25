@@ -114,6 +114,31 @@
     (is-true (every 'eql (list p4 p3 p2 p1) (ns:package-internal-to-list p5)))))
 
 
+;;; PACKAGE-PACKAGE
+;;; ===============
+
+(test package-package-returns-nil-at-top-level
+  (with-packages (p1)
+    (is-true (null (ns:package-package p1)))))
+
+(test package-package-returns-home-package-at-one-level-deep
+  (with-packages ((p1 p2))
+    (is (eql p1 (ns:package-package p2)))))
+
+(test package-package-returns-home-package
+  (with-packages ((p1 (p2 (p3 p4))))
+    (is (eql p2 (ns:package-package p3)))))
+
+
+;;; PACKAGE-NAME
+;;; ============
+
+(test package-package-returns-a-string
+  (with-packages ((p1))
+    (is (typep (ns:package-name p1) 'string:string))
+    (is (string:string= (string:string "p1") (ns:package-name p1)))))
+
+
 ;;; INTERN, EXPORT and SYMBOL-PACKAGE
 ;;; =================================
 ;;;
