@@ -66,7 +66,7 @@ implementation, but tests are not complete yet.
   issue](https://github.com/RoyArne/lisp/issues/1#issue-5945890843). It
   has to do with error correction during an export/import interaction.
 
-- [ ] **list-all-packages** (Function)
+- [x] **list-all-packages** (Function)
 
 - [ ] **rename-package** (Function)
 
@@ -207,7 +207,7 @@ At some point I need to make an "initialise-system-packages" module,
 subsytem or function. It needs to setup the variables \*packages\*,
 \*package\*, \*lisp\*, \*keyword\*, and \*user\*.
 
-- [ ] **list-peer-packages** (Function)
+- [x] **list-peer-packages** (Function)
 
 - [ ] **package-internal-list** (Function)
 

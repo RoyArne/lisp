@@ -44,6 +44,29 @@
 ;;; LIST-ALL-PACKAGES and LIST-PEER-PACKAGES
 ;;; ========================================
 
+(test list-all-packages-at-top-level
+  (with-packages (p1 p2 p3 p4)
+    (is-true (every 'eql ns:*packages* (ns:list-all-packages))))
+  (with-packages ((p1 p2) (p3 p4))
+    (is-true (every 'eql (cons p2 ns:*packages*) (ns:list-all-packages)))))
+
+(test list-all-packages-at-internal-levels
+  (with-packages ((p1 (p2 p3)
+                      (p4 p5))
+                  p6)
+    (setf ns:*package* p4)
+    (is-true (every 'eql (append (list p5) (list p4 p2) ns:*packages*) (ns:list-all-packages)))))
+
+(test list-peer-packages-at-top-level
+  (with-packages ((p1 p2) (p3 p4))
+    (is-true (every 'eql ns:*packages* (ns:list-peer-packages)))))
+
+(test list-peer-packages-at-internal-levels
+  (with-packages ((p1 (p2 p3)
+                      (p4 p5))
+                  p6)
+    (setf ns:*package* p4)
+    (is-true (every 'eql (list p4 p2) (ns:list-peer-packages)))))
 
 ;;; INTERN, EXPORT and SYMBOL-PACKAGE
 ;;; =================================
