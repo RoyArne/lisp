@@ -134,9 +134,22 @@
 ;;; ============
 
 (test package-package-returns-a-string
-  (with-packages ((p1))
+  (with-packages (p1)
     (is (typep (ns:package-name p1) 'string:string))
     (is (string:string= (string:string "p1") (ns:package-name p1)))))
+
+
+;;; PACKAGE?
+;;; ========
+
+(test package-predicate
+  (with-packages (p1)
+    (is-true (ns:package? p1))
+    (is-false (ns:package? nil))
+    (is-false (ns:package? "p1"))
+    (is-false (ns:package? (string:string "p1")))
+    (is-false (ns:package? :p1))
+    (is-false (ns:package? (ns:make-symbol (string:string "p1"))))))
 
 
 ;;; INTERN, EXPORT and SYMBOL-PACKAGE
@@ -493,8 +506,6 @@
 
 ;;; FIND-PACKAGE
 ;;; ============
-;;;
-;;; TODO: test find-package with local nicknames.
 
 (test find-package-no-matches
   (with-packages (p1 (p2 p3))
@@ -508,6 +519,17 @@
     (is (eql p2 (ns:find-package "p2")))
     (is (eql p2 (ns:in-package "p2")))
     (is (eql p3 (ns:find-package "p3")))))
+
+(test find-package-with-local-nickname
+  (with-packages (p1 p2)
+    (is (eql p1 (ns:add-package-local-nickname "p3" p2 p1)))
+    (is (eql p2 (ns:find-package "p3")))))
+
+(test find-package-local-nickname-takes-presedence
+  (with-packages (p1 p2 p3)
+    (is (eql p1 (ns:add-package-local-nickname "p3" p2 p1)))
+    (is (eql p2 (ns:find-package "p3")))))
+
 
 ;;; DEFPACKAGE
 ;;; ==========

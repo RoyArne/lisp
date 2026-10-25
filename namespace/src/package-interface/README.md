@@ -140,9 +140,9 @@ implementation, but tests are not complete yet.
   All predicates are implemented as _name_?. packagep is implemented
   as package?.
 
-- [ ] **package?** (Function)
+- [x] **package?** (Function)
 
-- [ ] **\*package\*** (Variable)
+- [x] **\*package\*** (Variable)
 
 - [ ] **package-error** (Condition Type)
 
