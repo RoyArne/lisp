@@ -416,7 +416,60 @@
         (is (eql p2 (ns:symbol-package symbol)))
         (is (eql :internal status))
         (is (eql symbol (find symbol (ns:package-shadowing-symbols p2))))))))
+
+
+;;; UNINTERN
+;;; ========
+
+(test unintern-uninterns-symbols
+  (with-packages (p1)
+    (let ((s1 (ns:intern "s1" p1)))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s1" p1)
+        (is (eql s1 symbol))
+        (is (eql :internal status)))
+      (is-true (ns:unintern s1 p1))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s1" p1)
+        (is-false symbol)
+        (is-false status))
+      (is-false (ns:symbol-package s1)))))
+
+(test unintern-uninterns-shadowing-symbol
+  (with-packages (p1)
+    (is-true (ns:shadow "s1" p1))
+      (multiple-value-bind (s1 status)
+          (ns:find-symbol "s1" p1)
+        (is (eql :internal status))
+        (is-true (ns:unintern s1 p1))
+        (is-false (find s1 (ns:package-shadowing-symbols p1)))
+        (is-false (ns:symbol-package s1)))))
+
+(test unintern-doesnt-touch-inherited-symbol
+  (with-packages (p1 p2)
+    (let ((s1 (ns:intern "s1" p1)))
+      (is-true (ns:export s1 p1))
+      (is-true (ns:use-package p1 p2))
+      (is-false (ns:unintern s1 p2))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s1" p1)
+        (is (eql s1 symbol))
+        (is (eql :external status))))))
+
+(test unintern-shadowing-symbol-causing-conflict-signals-conflicting-symbol-names
+  (with-packages (p1 p2 p3)
+    (let ((s1 (ns:intern "s1" p1))
+          (s3 (ns:intern "s1" p3)))
+      (is-true (ns:export s1 p1))
+      (is-true (ns:export s3 p3))
+      (is-true (ns:shadow "s1" p2))
+      (let ((s2 (ns:find-symbol "s1" p2)))
+        (is-true (ns:use-package p1 p2))
+        (is-true (ns:use-package p3 p2))
+        (signals ns:conflicting-symbol-names (ns:unintern s2 p2))))))
       
+      
+        
 
 ;;; USE-PACKAGE
 ;;; ===========

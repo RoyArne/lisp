@@ -79,7 +79,7 @@ implementation, but tests are not complete yet.
 
 - [ ] **unexport** (Function)
 
-- [ ] **unintern** (Function)
+- [x] **unintern** (Function)
 
 - [x] **in-package** (Macro)
 
