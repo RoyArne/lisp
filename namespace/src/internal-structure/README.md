@@ -50,3 +50,14 @@ designate local nicknames, and share symbols.
 Package and symbol manipulators accept their work without checking for
 errors: the package-interface and symbol-interface modules are
 responsible for signaling and correcting errors.
+
+## Status
+
+Better type checking for \*packages\*, \*lisp\* and \*keyword\* is required:
+
+- \*packages\* must hold a list of packages, and those packages must
+  be top-level packages.
+- \*lisp\* and \*keyword\* must hold a top-level package.
+
+However, type definitions are not implemented yet, and they don't
+belong in the namespace system.

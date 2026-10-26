@@ -78,11 +78,14 @@ nil.")
 		     (typep condition 'package-is-the-current-package))
 	     (return-from delete-package nil))))
 
-        ((or (eql package *lisp*)
-             (eql package *keyword*))
+        ((or (eql package *lisp*) ; (find *lisp* hierarchy)
+             (eql package *keyword*)) ; (find *keyword* hierarchy)
          ;; System packages cannot be deleted. Offer a choice to return NIL
-         ;; instead. We assume *lisp* and *keyword* can never be an internal
-         ;; package.
+         ;; instead. We assume *lisp* and *keyword* are never internal
+         ;; packages. It is perfectly possible for someone to set one of them
+         ;; to an internal package though, they just shouldnt.
+         ;; FIXME: this needs an external fix, we need a way to define types
+         ;;        for *lisp* and *keyword* so they can only hold top-level packages
          (restart-case
 	     (error 'package-is-a-system-package
 		    :package package

@@ -144,6 +144,8 @@ implementation, but tests are not complete yet.
 
 - [x] **\*package\*** (Variable)
 
+      Note that \*package\* is implemented in the internal-structure module.
+
 - [ ] **package-error** (Condition Type)
 
 - [ ] **package-error-package** (Function)
@@ -217,12 +219,35 @@ subsytem or function. It needs to setup the variables \*packages\*,
 
 - [ ] **\*keyword\*** (Variable)
 
-  Holds an empty package named "keyword".
+  Holds an empty package named "keyword". Note that \*keyword\* is
+  implemented in the internal-structure module.
+
+  There is an unresolved issue regarding what type of package can be
+  stored in it: we want it to be a top-level package that posess any
+  special properties that a keyword package has (this is not defined
+  yet).
 
 - [ ] **\*lisp\*** (Variable)
 
   Intended to hold the system library package. For now it is an empty
-  package named "lisp".
+  package named "lisp". Note that \*lisp\* is implemented in the
+  internal-structure module.
+
+  There is an unresolved issue regarding what type of package can be
+  stored in it: we want it to be a top-level package. Preferably one
+  that implements the lisp-system, but maybe it is ok to allow users
+  to replace it. For example, we may want to make a \*packages\*
+  top-level for a Common Lisp compatibility system. It would have its
+  own \*lisp\*.
+
+  ```
+  (defun top-level-package? (object)
+    (and (package? object)
+         (null (package-package object))))
+	 
+  (deftype top-level-package ()
+    `(satisfies top-level-package?))
+  ```
 
 - [ ] **\*packages\*** (Variable)
 
