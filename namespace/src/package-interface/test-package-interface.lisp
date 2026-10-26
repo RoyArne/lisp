@@ -269,7 +269,121 @@
         (is (eql s1 s1-exported))
         (is (eql :external status)))
       (is-true (find s1 (ns:package-shadowing-symbols p2))))))
-  
+
+
+;;; IMPORT
+;;; ======
+
+(test import-imports
+  (with-packages (p1 p2)
+    (let ((s1 (ns:intern "s1" p1)))
+      (is-true (ns:import s1 p2))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s1" p2)
+        (is (eql s1 symbol))
+        (is (eql :internal status))))))
+
+(test import-uninterned-symbol-makes-importer-home-package
+  (with-packages (p1)
+    (let ((s1 (ns:make-symbol "s1")))
+      (is-true (null (ns:symbol-package s1)))
+      (is-true (ns:import s1 p1))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s1" p1)
+        (is (eql s1 symbol))
+        (is (eql :internal status)))
+      (is (eql p1 (ns:symbol-package s1))))))
+
+(test import-symbol-that-is-present-does-not-change-its-status
+  (with-packages (p1)
+    (let ((s1 (ns:intern "s1" p1)))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s1" p1)
+        (is-true (ns:import s1 p1))
+        (multiple-value-bind (symbol1 status1)
+            (ns:find-symbol "s1" p1)
+          (is (eql symbol symbol1))
+          (is (eql status status1))))
+      (is-true (ns:export s1))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s1" p1)
+        (multiple-value-bind (symbol1 status1)
+            (ns:find-symbol "s1" p1)
+          (is (eql symbol symbol1))
+          (is (eql status status1)))))))
+
+(test import-signals-conflicting-symbol-names
+  (with-packages (p1 p2 p3)
+    (let ((s1 (ns:intern "s0" p1))
+          (s2 (ns:intern "s0" p2)))
+      (signals ns:conflicting-symbol-names (ns:import s1 p2))
+      (is-true (ns:export s1 p1))
+      (is-true (ns:use-package p1 p3))
+      (signals ns:conflicting-symbol-names (ns:import s2 p3)))))
+
+(test import-corrects-conflicting-symbol-names-by-abort
+  ;; 3 cases here, conflict with :internal, :external, :inherited symbols.
+  (with-packages (p1 p2 p3)
+    (let ((s1 (ns:intern "s0" p1))
+          (s2 (ns:intern "s0" p2)))
+      (is-true (handler-bind ((ns:conflicting-symbol-names
+                                #'(lambda (condition)
+                                    (invoke-restart (find-restart 'ns:abort condition)))))
+                 (ns:import s2)))
+      (is-true (ns:export s1 p1))
+      (is-true (handler-bind ((ns:conflicting-symbol-names
+                                #'(lambda (condition)
+                                    (invoke-restart (find-restart 'ns:abort condition)))))
+                 (ns:import s2)))
+      (is-true (ns:use-package p1 p3))
+      (is-true (handler-bind ((ns:conflicting-symbol-names
+                                #'(lambda (condition)
+                                    (invoke-restart (find-restart 'ns:abort condition)))))
+                 (ns:import s2 p3))))))
+
+(test import-corrects-conflicting-symbol-names-by-shadow
+  (with-packages (p1 p2 p3)
+    (let ((s1 (ns:intern "s0" p1))
+          (s2 (ns:intern "s0" p2)))
+      (is-true (ns:export s1 p1))
+      (is-true (ns:use-package p1 p3))
+      (is-true (handler-bind ((ns:conflicting-symbol-names
+                                #'(lambda (condition)
+                                    (invoke-restart (find-restart 'ns:shadow condition)))))
+                 (ns:import s2 p3)))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s0" p3)
+        (is (eql s2 symbol))
+        (is (eql :internal status))
+        (is (eql s2 (find s2 (ns:package-shadowing-symbols p3))))))))
+
+(test import-corrects-conflicting-symbol-names-by-shadow
+  (with-packages (p1 p2)
+    (let ((s1 (ns:intern "s0" p1))
+          (s2 (ns:intern "s0" p2)))
+      (is-true (handler-bind ((ns:conflicting-symbol-names
+                                #'(lambda (condition)
+                                    (invoke-restart (find-restart 'ns:unintern condition)))))
+                 (ns:import s1 p2)))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s0" p2)
+        (is (eql s1 symbol))
+        (is (eql :internal status)))
+      (is-true (null (ns:symbol-package s2)))))
+  (with-packages (p1 p2)
+    (let ((s1 (ns:intern "s0" p1))
+          (s2 (ns:intern "s0" p2)))
+      (ns:export s2 p2)
+      (is-true (handler-bind ((ns:conflicting-symbol-names
+                                #'(lambda (condition)
+                                    (invoke-restart (find-restart 'ns:unintern condition)))))
+                 (ns:import s1 p2)))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s0" p2)
+        (is (eql s1 symbol))
+        (is (eql :internal status)))
+      (is-true (null (ns:symbol-package s2))))))
+
 
 ;;; USE-PACKAGE
 ;;; ===========

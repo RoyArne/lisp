@@ -60,11 +60,7 @@ implementation, but tests are not complete yet.
 
 - [ ] **find-all-symbols** (Function)
 
-- [ ] **import** (Function)
-
-  Implemented with tests written. There is one [unresolved
-  issue](https://github.com/RoyArne/lisp/issues/1#issue-5945890843). It
-  has to do with error correction during an export/import interaction.
+- [x] **import** (Function)
 
 - [x] **list-all-packages** (Function)
 
@@ -178,11 +174,17 @@ Tested in the **in-package** and package local nickname tests.
 
 - [ ] **package-error-symbol** (Function)
 
-- [ ] **package-is-a-system-package** (Condition Type)
+- [x] **package-is-a-system-package** (Condition Type)
 
-- [ ] **package-is-in-use** (Condition Type)
+Tested in the delete-package tests.
 
-- [ ] **package-is-the-current-package** (Condition Type)
+- [x] **package-is-in-use** (Condition Type)
+
+Tested in the delete-package tests.
+
+- [x] **package-is-the-current-package** (Condition Type)
+
+Tested in the delete-package tests.
 
 - [ ] **package-symbol-error** (Condition Type)
 
