@@ -77,7 +77,7 @@ implementation, but tests are not complete yet.
 
 - [ ] ~~with-package-iterator~~ (Macro)
 
-- [ ] **unexport** (Function)
+- [x] **unexport** (Function)
 
 - [x] **unintern** (Function)
 

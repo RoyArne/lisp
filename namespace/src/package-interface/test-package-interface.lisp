@@ -271,6 +271,41 @@
       (is-true (find s1 (ns:package-shadowing-symbols p2))))))
 
 
+;;; UNEXPORT
+;;; ========
+
+(test unexport-unexports
+  (with-packages (p1)
+    (let ((s1 (ns:intern "s1" p1)))
+      (is-true (ns:export s1 p1))
+      (is (eql :external (nth-value 1 (ns:find-symbol "s1" p1))))
+      (is-true (ns:unexport s1 p1))
+      (is (eql :internal (nth-value 1 (ns:find-symbol "s1" p1)))))))
+
+(test unexport-signals-symbol-is-not-accessible
+  (with-packages (p1 p2)
+    (let ((s1 (ns:intern "s1" p1)))
+      (is-true (ns:export s1 p1))
+      (signals ns:symbol-is-not-accessible (ns:unexport s1 p2)))))
+
+(test unexport-corrects-symbol-is-not-accessible-by-import
+  (with-packages (p1 p2)
+    (let ((s1 (ns:intern "s1" p1)))
+      (is-true (ns:export s1 p1))
+      (is-true (handler-bind ((ns:symbol-is-not-accessible
+                                #'(lambda (condition)
+                                    (invoke-restart (find-restart 'ns:import condition)))))
+                 (ns:unexport s1 p2)))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s1" p1)
+        (is (eql s1 symbol))
+        (is (eql :external status)))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s1" p2)
+        (is (eql s1 symbol))
+        (is (eql :internal status))))))
+
+
 ;;; IMPORT
 ;;; ======
 
