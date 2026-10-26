@@ -11,45 +11,34 @@ package—a package designator.
 generalized boolean—t, or nil.
 
 Description:
-delete-package deletes package from all package system data
-structures. If the operation is successful, delete-package returns
-true, otherwise nil. The effect of delete-package is that the name and
-nicknames of package cease to be recognized package names. The package
-object is still a package (i.e., packagep is true of it) but
-package-name returns nil. The consequences of deleting the COMMON-LISP
-package or the KEYWORD package are undefined. The consequences of
-invoking any other package operation on package once it has been
-deleted are unspecified. In particular, the consequences of invoking
-find-symbol, intern and other functions that look for a symbol name in
-a package are unspecified if they are called with *package* bound to
-the deleted package or with the deleted package as an argument.
+Deletes package from the package system. Returns true if the operation is
+successful, otherwise nil.
 
-If package is a package object that has already been deleted,
-delete-package immediately returns nil.
+The deleted package is still a package object \(i.e. package? is true for it\),
+but package-name returns nil.
 
-After this operation completes, the home package of any symbol whose
-home package had previously been package is
-implementation-dependent. Except for this, symbols accessible in
-package are not modified in any other way; symbols whose home package
-is not package remain unchanged.
+If package is a deleted package object, then delete-package immediately
+returns nil.
+
+After this operation completes, symbols who were accessible in package are
+unchanged. If package had any internal packages, they are still internal to
+package. Package itself is removed from its home package \(if any\).
 
 Exceptional Situations:
-If the package designator is a name that does not currently name a
-package, a correctable error of type package-error is signaled. If
-correction is attempted, no deletion action is attempted; instead,
-delete-package immediately returns nil.
+If the package designator is a name that does not currently name a package, a
+correctable error of type package-error is signaled. If correction is
+attempted, no deletion action is attempted; instead, delete-package
+immediately returns nil.
 
-If package is used by other packages, a correctable error of type
-package-error is signaled. If correction is attempted, unuse-package
-is effectively called to remove any dependencies, causing package's
-external symbols to cease being accessible to those packages that use
-package. delete-package then deletes package just as it would have had
-there been no packages that used it.
+If package, or a package that is internal to package, is used by other
+packages that are not internal to package, a correctable error of type
+package-error is signaled. If correction is attempted, unuse-package is called
+to remove any dependencies. delete-package then deletes package.
 
-If package is the current package, a correctable error of type
-package-error is signaled. If correction is attempted, no deletion
-action is attempted; instead, delete-package immediately returns
-nil.
+If package, or a package that is internal to package, is the current package,
+a correctable error of type package-error is signaled. If correction is
+attempted, no deletion action is attempted; instead, delete-package
+immediately returns nil.
 
 If package is a system package, a correctable error of type
 package-error is signaled. If correction is attempted, no deletion
@@ -67,6 +56,9 @@ nil.")
 
   (:method ((package package))
     (cond
+      ((null (package-name package))
+       ;; If the name is nil then the package is already deleted.
+       (return-from delete-package nil))
       ((eql package *package*)
        ;; The current package cannot be deleted. Offer a choice to return NIL instead.
        (restart-case
