@@ -59,7 +59,7 @@ implementation, but tests are not complete yet.
       
 - [x] **find-package** (Function)
 
-- [ ] **find-all-symbols** (Function)
+- [x] **find-all-symbols** (Function)
 
 - [x] **import** (Function)
 

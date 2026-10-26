@@ -799,6 +799,30 @@
     (is-false (ns:delete-package p2))))
 
 
+;;; FIND-ALL-SYMBOLS
+;;; ================
+
+(test find-all-symbol-finds-all
+  (with-packages ((p1 p2) p3 p4)
+    (loop with symbols = (list (ns:intern "s1" p1)
+                               (ns:intern "s1" p2)
+                               (ns:intern "s1" p3)
+                               (ns:intern "s1" p4))
+          for s in (ns:find-all-symbols "s1")
+          do (is (eql s (find s symbols))))))
+
+(test find-all-symbols-finds-only-visible
+  (with-packages ((p1 (p2 (p3 p4))) p5)
+    (loop with symbols = (list (ns:intern "s1" p1)
+                               (ns:intern "s1" p2)
+                               (ns:intern "s1" p5))
+          with not-visible = (list (ns:intern "s1" p3)
+                                   (ns:intern "s1" p4))
+          for s in (ns:find-all-symbols "s1")
+          do (is (eql s (find s symbols)))
+          do (is (null (find s not-visible))))))
+  
+
 ;;; FIND-SYMBOL
 ;;; ===========
 ;;;
