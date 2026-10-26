@@ -68,7 +68,7 @@ implementation, but tests are not complete yet.
 
 - [x] **list-all-packages** (Function)
 
-- [ ] **rename-package** (Function)
+- [x] **rename-package** (Function)
 
 - [ ] **shadow** (Function)
 

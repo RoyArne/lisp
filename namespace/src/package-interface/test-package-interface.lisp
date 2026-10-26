@@ -420,6 +420,34 @@
     (is (eql (ns:find-symbol "s1" p1) (ns:find-symbol "s1" p2)))))
 
 
+;;; RENAME-PACKAGE
+;;; ==============
+
+(test rename-package-top-level
+  (with-packages (p1)
+    (is (eql p1 (ns:rename-package p1 "p2")))
+    (is (eql p1 (ns:find-package "p2")))))
+
+(test rename-package-internal
+  (with-packages ((p1 p2))
+    (setf ns:*package* p2)
+    (is (eql p2 (ns:rename-package p2 "p3")))
+    (is (eql p2 (ns:find-package "p3")))))
+
+(test rename-package-signals-conflicting-package-names
+  (with-packages (p1 p2)
+    (signals ns:conflicting-package-names (ns:rename-package p1 "p2"))))
+
+(test rename-package-corrects-conflicting-package-names-by-delete-package
+  (with-packages (p1 p2)
+    (is (eql p1 (handler-bind ((ns:conflicting-package-names
+                                 #'(lambda (condition)
+                                     (invoke-restart (find-restart 'ns:delete-package condition)))))
+                  (ns:rename-package p1 "p2"))))
+    (is (eql p1 (ns:find-package "p2")))
+    (is-true (null (ns:package-name p2)))))
+    
+
 ;;; FIND-SYMBOL
 ;;; ===========
 ;;;
