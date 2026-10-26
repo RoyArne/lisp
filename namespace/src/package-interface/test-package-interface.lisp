@@ -385,6 +385,39 @@
       (is-true (null (ns:symbol-package s2))))))
 
 
+;;; SHADOW
+;;; ======
+
+(test shadow-in-empty-package
+  (with-packages (p1)
+    (is-true (ns:shadow "s1" p1))
+    (multiple-value-bind (symbol status)
+        (ns:find-symbol "s1" p1)
+      (is (eql :internal status))
+      (is (eql symbol (find symbol (ns:package-shadowing-symbols p1)))))))
+
+(test shadow-existing-symbol
+  (with-packages (p1)
+    (let ((s1 (ns:intern "s1" p1))) 
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s1" p1)
+        (is (eql :internal status))
+        (is-true (ns:shadow s1 p1)) 
+        (is (eql symbol (find symbol (ns:package-shadowing-symbols p1))))))))
+
+(test shadow-inherited-symbol-in-package
+  (with-packages (p1 p2)
+    (let ((s1 (ns:intern "s1" p1)))
+      (is-true (ns:export s1 p1))
+      (is-true (ns:use-package p1 p2))
+      (is-true (ns:shadow "s1" p2))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s1" p2)
+        (is (eql p2 (ns:symbol-package symbol)))
+        (is (eql :internal status))
+        (is (eql symbol (find symbol (ns:package-shadowing-symbols p2))))))))
+      
+
 ;;; USE-PACKAGE
 ;;; ===========
 ;;;

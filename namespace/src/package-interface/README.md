@@ -46,7 +46,8 @@ implementation, but tests are not complete yet.
 
 - [ ] **package** (System Class)
 
-  Implemented but tests are not written.
+  Implemented but tests are not written. Note that the class is
+  implemented in the classes module.
 
 - [ ] **export** (Function)
 
@@ -66,11 +67,11 @@ implementation, but tests are not complete yet.
 
 - [x] **rename-package** (Function)
 
-- [ ] **shadow** (Function)
+- [x] **shadow** (Function)
 
 - [ ] **shadowing-import** (Function)
 
-- [ ] **delete-package** (Function)
+- [x] **delete-package** (Function)
 
 - [ ] **make-package** (Function)
 
