@@ -5,10 +5,10 @@
 (defgeneric unuse-package (packages &optional package)
 
   (:documentation "Syntax:
-\(unuse-package packages &optional package\) → t
+\(unuse-package packages-to-unuse &optional package\) → t
 
 Arguments and Values:
-packages—a designator for a list of package designators.
+packages-to-unuse—a designator for a list of package designators.
 package—a package designator. The default is the current package.
 
 Description:

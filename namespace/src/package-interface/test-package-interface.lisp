@@ -446,7 +446,78 @@
                   (ns:rename-package p1 "p2"))))
     (is (eql p1 (ns:find-package "p2")))
     (is-true (null (ns:package-name p2)))))
-    
+
+;;; DELETE-PACKAGE
+;;; ==============
+
+(test delete-package-in-top-level
+  (with-packages (p1 p2)
+    (is-true (ns:delete-package p2))
+    (is-true (null (ns:find-package "p2")))
+    (is-true (null (ns:package-name p2)))))
+
+(test delete-package-signals-package-does-not-exist
+  (with-packages (p1)
+    (signals ns:package-does-not-exist (ns:delete-package "p2"))))
+
+(test delete-package-corrects-package-does-not-exist-by-continue
+  (with-packages (p1)
+    (is-true (null (handler-bind ((ns:package-does-not-exist
+                                    #'(lambda (condition)
+                                        (invoke-restart (find-restart 'ns:continue condition)))))
+                     (ns:delete-package "p2"))))))
+
+(test delete-package-signals-package-is-the-current-package
+  (with-packages (p1)
+    (signals ns:package-is-the-current-package (ns:delete-package p1))))
+
+(test delete-package-corrects-package-is-the-current-package-by-continue
+  (with-packages (p1)
+    (is-true (null (handler-bind ((ns:package-is-the-current-package
+                                    #'(lambda (condition)
+                                        (invoke-restart (find-restart 'ns:continue condition)))))
+                     (ns:delete-package p1))))))
+
+(test delete-package-signals-package-is-in-use
+  (with-packages (p1 p2)
+    (is-true (ns:use-package p2 p1))
+    (signals ns:package-is-in-use (ns:delete-package p2))))
+
+(test delete-package-corrects-package-is-in-use-by-unuse-package
+  (with-packages (p1 p2)
+    (is-true (ns:use-package p2 p1))
+    (is-true (handler-bind ((ns:package-is-in-use
+                              #'(lambda (condition)
+                                  (invoke-restart (find-restart 'ns:unuse-package condition)))))
+               (ns:delete-package p2)))
+    (is-true (null (ns:find-package "p2")))
+    (is-true (null (ns:package-name p2)))))
+
+(test delete-package-signals-package-is-a-system-package
+  (with-packages (p1 p2 p3)
+    (setf ns:*lisp* p2
+          ns:*keyword* p3)
+    (signals ns:package-is-a-system-package (ns:delete-package p2))
+    (signals ns:package-is-a-system-package (ns:delete-package p3))))
+
+(test delete-package-corrects-package-is-a-system-package-by-continue
+  (with-packages (p1 p2 p3)
+    (setf ns:*lisp* p2
+          ns:*keyword* p3)
+    (is-true (null (handler-bind ((ns:package-is-a-system-package
+                                    #'(lambda (condition)
+                                        (invoke-restart (find-restart 'ns:continue condition)))))
+                     (ns:delete-package p2))))
+    (is-true (null (handler-bind ((ns:package-is-a-system-package
+                                    #'(lambda (condition)
+                                        (invoke-restart (find-restart 'ns:continue condition)))))
+                     (ns:delete-package p3))))))
+
+(test delete-package-on-deleted-package-returns-nil
+  (with-packages (p1 p2)
+    (is-true (ns:delete-package p2))
+    (is-false (ns:delete-package p2))))
+
 
 ;;; FIND-SYMBOL
 ;;; ===========

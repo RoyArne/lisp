@@ -156,7 +156,7 @@ implementation is complete but I still need to test them.
 
 - [x] **conflicting-package-names** (Condition Type)
 
-Tested in the package local nickname tests.
+Tested in the package local nickname and rename-package tests.
 
 - [x] **conflicting-symbol-names** (Condition Type)
 

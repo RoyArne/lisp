@@ -224,9 +224,12 @@
   ;;
 
   (:export #:abort                            ; import
+           #:continue                         ; delete-package
+           #:delete-package                   ; rename-package, also a function above
            #:import                           ; export, also a function above
            #:keep-old                         ; use-package
            #:shadow                           ; export, import, also a function above
            #:take-new                         ; use-package
-           #:unintern))                       ; export, import, also a function above
+           #:unintern                         ; export, import, also a function above
+           #:unuse-package))                  ; delete-package, also a function above
   
