@@ -16,11 +16,13 @@ internal. It has no effect on symbols who are already internal to
 package.
 
 Exceptional Situations:
-An error of type package error is signaled if any symbol is not
-accessible in package.
 
-See Also:
-export.")
+symbol-is-not-accessible
+
+  A correctable error of type package-error.
+
+  Signaled if a symbol being unexported is not accessible in package and
+  offers an option to 'import' the symbol.")
 
   (:method (symbols &optional (package *package*))
     (declare (type package-designator package))
