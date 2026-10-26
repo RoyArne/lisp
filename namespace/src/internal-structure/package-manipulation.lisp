@@ -64,17 +64,29 @@
 
          (ftype (function (string package)
                           (or null package))
-                find-visible-package))
+                find-visible-package)
+
+         (ftype (function (package)
+                          list)
+                list-hierarchy))
 
 (defun visible-list (context-designator)
+  "Returns the list of packages returned by list-all-packages."
   (etypecase context-designator
     (null *packages*)
     (package (append (internal-list context-designator)
                      (visible-list (home-package context-designator))))))
 
 (defun find-visible-package (name package)
+  "Searches for a package named name in the local nicknames and visible list of
+package. Local nicknames take precedence."
   (or (rest (find-local-nickname name package))
       (find name (visible-list package) :test 'string= :key 'name)))
+
+(defun list-hierarchy (package)
+  "Return a list of packages (including package itself) that are internal to
+package by means ofa right-to-left pre-order traversal."
+  (cons package (mapcan 'list-hierarchy (internal-list package))))
 
 
 ;;; Checking for Package Name Conflicts
