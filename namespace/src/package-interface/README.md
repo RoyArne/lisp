@@ -141,7 +141,7 @@ implementation, but tests are not complete yet.
 
 - [x] **\*package\*** (Variable)
 
-      Note that \*package\* is implemented in the internal-structure module.
+  Note that \*package\* is implemented in the internal-structure module.
 
 - [ ] **package-error** (Condition Type)
 
