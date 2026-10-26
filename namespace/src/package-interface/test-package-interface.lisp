@@ -456,6 +456,27 @@
     (is-true (null (ns:find-package "p2")))
     (is-true (null (ns:package-name p2)))))
 
+(test delete-package-in-internal-levels
+  (with-packages ((p1 p2))
+    (is-true (ns:delete-package p2))
+    (is-true (null (ns:find-package "p2")))
+    (is-true (null (ns:package-name p2)))))
+
+(test delete-package-with-internal-packages
+  (with-packages ((p1 (p2 (p3 p4)))
+                  (p5 (p6 (p7 p8 p9)
+                          (p8 p9))))
+    (is-true (ns:delete-package p2))
+    (is-true (null (ns:find-package "p2")))
+    (is-true (null (ns:package-name p2)))
+    (setf ns:*package* p6)
+    (is-true (ns:delete-package p7))
+    (is-true (null (ns:find-package "p7")))
+    (is-true (null (ns:package-name p7)))))
+
+;;; FIXME: No tests for package-does-not-exist using internal packages because
+;;;        I don't believe there could be a difference. Maybe go back and
+;;;        check this when other tests are complete.
 (test delete-package-signals-package-does-not-exist
   (with-packages (p1)
     (signals ns:package-does-not-exist (ns:delete-package "p2"))))
@@ -469,10 +490,19 @@
 
 (test delete-package-signals-package-is-the-current-package
   (with-packages (p1)
+    (signals ns:package-is-the-current-package (ns:delete-package p1)))
+  (with-packages ((p1 (p2 (p3 p4))))
+    (setf ns:*package* p4)
     (signals ns:package-is-the-current-package (ns:delete-package p1))))
 
 (test delete-package-corrects-package-is-the-current-package-by-continue
   (with-packages (p1)
+    (is-true (null (handler-bind ((ns:package-is-the-current-package
+                                    #'(lambda (condition)
+                                        (invoke-restart (find-restart 'ns:continue condition)))))
+                     (ns:delete-package p1)))))
+  (with-packages ((p1 (p2 (p3 p4))))    
+    (setf ns:*package* p4)
     (is-true (null (handler-bind ((ns:package-is-the-current-package
                                     #'(lambda (condition)
                                         (invoke-restart (find-restart 'ns:continue condition)))))
@@ -481,6 +511,9 @@
 (test delete-package-signals-package-is-in-use
   (with-packages (p1 p2)
     (is-true (ns:use-package p2 p1))
+    (signals ns:package-is-in-use (ns:delete-package p2)))
+  (with-packages (p1 (p2 (p3 p4)))
+    (is-true (ns:use-package p4 p1))
     (signals ns:package-is-in-use (ns:delete-package p2))))
 
 (test delete-package-corrects-package-is-in-use-by-unuse-package
@@ -491,8 +524,20 @@
                                   (invoke-restart (find-restart 'ns:unuse-package condition)))))
                (ns:delete-package p2)))
     (is-true (null (ns:find-package "p2")))
+    (is-true (null (ns:package-name p2))))
+  (with-packages (p1 (p2 (p3 p4)))
+    (is-true (ns:use-package p3 p1))
+    (is-true (handler-bind ((ns:package-is-in-use
+                              #'(lambda (condition)
+                                  (invoke-restart (find-restart 'ns:unuse-package condition)))))
+               (ns:delete-package p2)))
+    (is-true (null (ns:find-package "p2")))
     (is-true (null (ns:package-name p2)))))
 
+;;; We do not test package-is-a-system-package because the code in
+;;; delete-package does not do anything to check it either. Our code for
+;;; checking if something is a system package is to compare it to *lisp* and
+;;; *keyword*, and those variables could be set to system packages.
 (test delete-package-signals-package-is-a-system-package
   (with-packages (p1 p2 p3)
     (setf ns:*lisp* p2
