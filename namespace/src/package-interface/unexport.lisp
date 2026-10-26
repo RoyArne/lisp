@@ -36,7 +36,7 @@ export.")
   (:method ((symbol symbol) &optional (package *package*))
     (declare (type package-designator package))
     (let* ((package (resolve-package-designator package *package*))
-	   (status (nth-value 1 (find-symbol (symbol-name symbol) package *package*))))
+	   (status (nth-value 1 (find-symbol (symbol-name symbol) package))))
       ;; Error if not accessible. Correctable by importing.
       (when (null status)
 	(restart-case
