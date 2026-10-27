@@ -514,7 +514,49 @@
       (is (eql s1 (find s1 (ns:package-shadowing-symbols p1))))
       (is-false (ns:package-shadowing-symbols p2))
       (is-false (ns:package-shadowing-symbols p3)))))
-    
+
+;;; SHADOWING-IMPORT
+;;; ================
+
+(test shadowing-import-imports
+  (with-packages (p1 p2 p3 p4)
+    (let ((s1 (ns:intern "s" p1))
+          (s2 (ns:intern "s" p2))
+          (s4 (ns:intern "s1" p1))
+          (s5 (ns:intern "s1" p2)))
+      (is-true (ns:export s4 p1))
+      (is-true (ns:export s5 p2))
+      ;; internal symbol s1 into empty package p4
+      (is-true (ns:shadowing-import s1 p4))
+      (is (eql s1 (find s1 (ns:package-shadowing-symbols p4))))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s" p4)
+        (is (eql s1 symbol))
+        (is (eql :internal status)))
+      ;; external symbol s4 into p4
+      (is-true (ns:shadowing-import s4 p4))
+      (is (eql s4 (find s4 (ns:package-shadowing-symbols p4))))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s1" p4)
+        (is (eql s4 symbol))
+        (is (eql :internal status)))
+      ;; internal symbol s1 into p2, conflicting with s2
+      (is-true (ns:shadowing-import s1 p2))
+      (is (eql s1 (find s1 (ns:package-shadowing-symbols p2))))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s" p2)
+        (is (not (eql s2 symbol)))
+        (is (eql :internal status)))
+      (is-false (ns:symbol-package s2))
+      ;; At this point s2 is uninterned
+      (is-true (ns:use-package p1 p3))      ; makes s4 is an :inherited symbol in p3
+      (is-true (ns:shadowing-import s5 p3)) ; s5 does not conflict with s4 because it is shadowing
+      (is (eql s5 (find s5 (ns:package-shadowing-symbols p3))))
+      (multiple-value-bind (symbol status)
+          (ns:find-symbol "s1" p3)
+        (is (eql s5 symbol))
+        (is (eql :internal status))))))
+
 
 ;;; UNINTERN
 ;;; ========

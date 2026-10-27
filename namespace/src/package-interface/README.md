@@ -85,7 +85,7 @@ below. The meaning of each entry is:
 
 - [x] **shadow** (Function)
 
-- [ ] **shadowing-import** (Function)
+- [x] **shadowing-import** (Function)
 
 - [x] **delete-package** (Function)
 
