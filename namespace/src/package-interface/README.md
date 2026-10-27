@@ -99,7 +99,7 @@ implementation, but tests are not complete yet.
 
 - [x] **do-symbols** (Macro)
 
-- [ ] **do-external-symbols** (Macro)
+- [x] **do-external-symbols** (Macro)
 
 - [ ] **do-all-symbols** (Macro)
 
