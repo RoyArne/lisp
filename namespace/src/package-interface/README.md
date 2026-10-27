@@ -46,17 +46,18 @@ internal and some both.
 
 This should probably be abstracted away in the internal-structure module.
 
-In the list(s) below, names that are crossed out ~~like this~~ have no
-implementation.
+The status of individual functions in the package inteface is listed
+below. The meaning of each entry is:
 
-Other names may have incomplete or complete implementations:
-
-- [x] this is implemented with test.
+- [x] this is implemented, including tests.
 
 - [ ] this has an initial implementation, but is missing tests.
 
-  And there may be other issues. There may be a note pointing out all
+  And there may be other issues. There may be a note pointing out all,
   or some of the issues.
+
+- [ ] ~~crossed out items have no implementation at all~~
+
 
 ### Status of The Packages Dictionary Implementation
 
@@ -122,7 +123,7 @@ Other names may have incomplete or complete implementations:
 
 - [x] **package-name** (Function)
 
-- [x] ~~package-nicknames~~ (Function) (**will NOT implement**)
+- [x] ~~package-nicknames~~ (Function) (**will not implement**)
 
   Package nicknames will not be added. However, if I want to load
   Common Lisp source code I have to deal with nicknames somehow.
@@ -141,7 +142,7 @@ Other names may have incomplete or complete implementations:
   The conflict testing could involve a large number of functions (and
   work).
 
-- [ ] **package-shadowing-symbols** (Function)
+- [x] **package-shadowing-symbols** (Function)
 
 - [x] **package-use-list** (Function)
 

@@ -503,6 +503,18 @@
         (is (eql :internal status))
         (is (eql symbol (find symbol (ns:package-shadowing-symbols p2))))))))
 
+;;; PACKAGE-SHADOWING-SYMBOLS
+;;; =========================
+
+(test package-shadowing-symbols-lists-shadowed-symbols
+  (with-packages (p1 p2 p3)
+    (let ((s1 (ns:intern "s1" p1))
+          (s2 (ns:intern "s2" p2)))
+      (is-true (ns:shadow "s1" p1))
+      (is (eql s1 (find s1 (ns:package-shadowing-symbols p1))))
+      (is-false (ns:package-shadowing-symbols p2))
+      (is-false (ns:package-shadowing-symbols p3)))))
+    
 
 ;;; UNINTERN
 ;;; ========
