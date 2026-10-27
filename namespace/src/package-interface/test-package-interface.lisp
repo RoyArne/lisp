@@ -5,11 +5,62 @@
 (def-suite test-package-interface :in namespace)
 (in-suite test-package-interface)
 
-;; (test make-package
-;;   (with-packages (p1 (p2 (p3 p4)))
-;;     (is-true (typep (ns::make-package "p5") 'ns::package))
-;;     (signals ns::conflicting-package-names (ns::make-package "p5"))
-;;     (is-true (typep (ns::make-package "p5" :home p4) 'ns::package))))
+;;; MAKE-PACKAGE
+;;; ============
+
+(test make-package-with-name
+  (with-packages (p1)
+    (let ((p2 (ns:make-package "p2")))
+      (is (eql p2 (first ns:*packages*)))
+      (is (eql p2 (ns:find-package "p2")))
+      (is-false (ns:package-local-nicknames p2)))))
+
+(test make-package-at-top-level-location-slots-are-correct
+  (with-packages (p1)
+    (let ((p2 (ns:make-package "p2")))
+      (is-false (ns:package-package p2))
+      (is-false (ns:package-internal-list p2))
+      (is-false (ns:package-internal-to-list p2))
+      (is-false (ns:package-use-list p2))
+      (is-false (ns:package-used-by-list p2)))))
+
+(test make-package-using-packages
+  (with-packages (p1 p2)
+    (let ((p3 (ns:make-package "p3" :use (list p1 p2))))
+      (is (eql p1 (find p1 (ns:package-use-list p3))))
+      (is (eql p2 (find p2 (ns:package-use-list p3))))
+      (is (eql p3 (find p3 (ns:package-used-by-list p1))))
+      (is (eql p3 (find p3 (ns:package-used-by-list  p2)))))))
+
+(test make-package-at-internal-level-makes-peer-package
+  (with-packages ((p1 p2))
+    (setf ns:*package* p2)
+    (let ((p3 (ns:make-package "p3")))
+      (is (eql p1 (ns:package-package p3)))
+      (setf ns:*package* p3)
+      (is (eql p2 (find p2 (ns:list-peer-packages)))))))      
+
+(test make-package-in-given-home-package
+  (with-packages ((p1 p2))
+    (let ((p3 (ns:make-package "p3" :home p1)))
+      (is (eql p1 (ns:package-package p3)))
+      (setf ns:*package* p3)
+      (is (eql p2 (find p2 (ns:list-peer-packages)))))))
+
+(test make-package-signals-conflicting-package-names
+  (with-packages (p1)
+    (signals ns:conflicting-package-names (ns:make-package "p1"))))
+
+(test make-package-corrects-conflicting-package-names-by-delete-package
+  (with-packages (p1 p2)
+    (is (typep (handler-bind ((ns:conflicting-package-names
+                                #'(lambda (condition)
+                                    (invoke-restart (find-restart 'ns:delete-package condition)))))
+                 (ns:make-package "p2"))
+               'ns:package))
+    (is-false (ns:package-name p2))
+    (is (not (eql p1 (ns:find-package "p2"))))))
+  
 
 
 ;;; IN-PACKAGE

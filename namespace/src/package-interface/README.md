@@ -73,7 +73,7 @@ implementation, but tests are not complete yet.
 
 - [x] **delete-package** (Function)
 
-- [ ] **make-package** (Function)
+- [x] **make-package** (Function)
 
 - [ ] ~~with-package-iterator~~ (Macro)
 
