@@ -25,27 +25,48 @@ unchanged. If package had any internal packages, they are still internal to
 package. Package itself is removed from its home package \(if any\).
 
 Exceptional Situations:
-If the package designator is a name that does not currently name a package, a
-correctable error of type package-error is signaled. If correction is
-attempted, no deletion action is attempted; instead, delete-package
-immediately returns nil.
 
-If package, or a package that is internal to package, is used by other
-packages that are not internal to package, a correctable error of type
-package-error is signaled. If correction is attempted, unuse-package is called
-to remove any dependencies. delete-package then deletes package. The effects
-of unusing a package is not undone if the process is aborted before all
-packages have been processed.
+package-does-not-exist
 
-If package, or a package that is internal to package, is the current package,
-a correctable error of type package-error is signaled. If correction is
-attempted, no deletion action is attempted; instead, delete-package
-immediately returns nil.
+  A correctable error of type package-error.
 
-If package is a system package, a correctable error of type
-package-error is signaled. If correction is attempted, no deletion
-action is attempted; instead, delete-package immediately returns
-nil.")
+  Signaled if the package-designator is a name that does not name a visible
+  package.
+
+  A 'continue' option corrects the error by aborting the deletion, and
+  delete-package immediately returns nil.
+
+package-is-the-current-package
+
+  A correctable arror of type package-error.
+
+  Signaled if package is the current package, *package*.
+
+  A 'continue' option corrects the error by aborting the deletion, and
+  delete-package immediately returns nil.
+
+package-is-a-system-package
+
+  A correctable arror of type package-error.
+
+  Signaled if package is one of the system packages, *lisp* or *keyword*.
+
+  A 'continue' option corrects the error by aborting the deletion, and
+  delete-package immediately returns nil.
+
+package-is-in-use
+
+  A correctable arror of type package-error.
+
+  Signaled if package, or a package that is internal to package, is used by
+  any package not internal to package.
+
+  A 'unuse-package' option corrects the error by calling unuse-package to
+  remove dependencies on package and its internal packages. delete-package
+  then deletes package and returns t.
+
+  The effects of unusing packages are not undone if the process is aborted
+  before all relevant packages have been processed.")
   
   (:method (package)
     (restart-case 
@@ -78,14 +99,18 @@ nil.")
 		     (typep condition 'package-is-the-current-package))
 	     (return-from delete-package nil))))
 
-        ((or (eql package *lisp*) ; (find *lisp* hierarchy)
-             (eql package *keyword*)) ; (find *keyword* hierarchy)
+        ((or (eql package *lisp*)
+             (eql package *keyword*))
          ;; System packages cannot be deleted. Offer a choice to return NIL
-         ;; instead. We assume *lisp* and *keyword* are never internal
-         ;; packages. It is perfectly possible for someone to set one of them
-         ;; to an internal package though, they just shouldnt.
-         ;; FIXME: this needs an external fix, we need a way to define types
-         ;;        for *lisp* and *keyword* so they can only hold top-level packages
+         ;; instead.
+         ;; 
+         ;; FIXME: We assume *lisp* and *keyword* are never internal
+         ;;        packages.
+         ;; 
+         ;;        It is perfectly possible for someone to set one of them to
+         ;;        an internal package though, they just shouldnt. This needs
+         ;;        an external fix, we need a way to define types for *lisp*
+         ;;        and *keyword* so they can only hold top-level packages
          (restart-case
 	     (error 'package-is-a-system-package
 		    :package package
@@ -116,33 +141,9 @@ nil.")
                                     (typep condition 'package-is-in-use))
                             (setf used-by-list (rest used-by-list))
                             (unuse-package package-to-unuse used-by))))))
-      ;;
-      ;; FIXME: we need to go through all the internal packages and make sure
-      ;;        they are not used by external packages.
-      ;; (loop for used-by = (first (used-by-list package))
-      ;;       until (null used-by)
-      ;;       do (restart-case
-      ;;   	 (error'package-is-in-use
-      ;;   	  :package package
-      ;;   	  :context *package*
-      ;;   	  :message (format nil
-      ;;   			   "Cannot delete ~~S because it is used by ~S in the context ~~S."
-      ;;   			   used-by))
-      ;;            (unuse-package ()
-      ;;   	   :report (lambda (stream)
-      ;;   		     (format stream "Call (unuse-package ~S ~S)." package used-by))
-      ;;   	   :test (lambda (condition)
-      ;;   		   (typep condition 'package-is-in-use))
-      ;;   	   (unuse-package package used-by)))))
     
     ;; Remove the package from its home.
     (remove-package package (home-package package))
-    
-    ;; Remove references to package from its symbols.
-    ;; (unintern-internal-symbols! package)
-    ;; (unintern-external-symbols! package)
-    ;; (unintern-shadowing-symbols! package)
-    ;; (clear-shadowing-symbols! package)
     
     ;; Remove package from the used-by-list of packages it is using.
     (clear-use-list! package)

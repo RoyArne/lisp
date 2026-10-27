@@ -53,8 +53,9 @@ conflicting-package-names
 
   A correctable error of type package-error.
 
-  Signaled if a package with the same name already exists, and offers
-  a 'delete-package' option to delete the existing package.")
+  Signaled if a package with the same name already exists.
+
+  A 'delete-package' resolves the conflict by deleting the existing package.")
 
   (:method (object &key (use '()) (home nil home-supplied?))
     (declare (type list use)

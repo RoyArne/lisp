@@ -59,12 +59,23 @@ Note:
 Local nicknames takes precedence over package names.
 
 Exceptional Situations:
-Signals an error of type type-error if package is not a package
-designator.
-Signals an error of type package-does-not-exist if package cannot be
-found in context.
-Signals a correctable error of type conflicting-package-names if
-local-nickname is already a local nickname for a different package.")
+
+conflicting-package-names
+
+  An error of type package-error.
+
+  Signaled if local-nickname is the same as the designated packages name \(by
+  string=\).
+
+conflicting-package-names
+
+  A correctable error of type package-error.
+
+  Signaled if local-nickname is the same as the nickname given to another
+  package \(by string=\).
+
+  A 'use-value' option corrects the error by inquiring for a new nickname to
+  be entered.")
 
   (:method (nickname actual-package &optional (package *package*))
     (declare (type package-designator package))

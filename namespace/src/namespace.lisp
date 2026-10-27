@@ -219,16 +219,15 @@
 
   ;; Restarts
   ;;
-  ;; Some conditions offer restarts, we export the restart names here. Some
-  ;; names are also exported above.
-  ;;
+  ;; Some names are also exported as functions/macros above.
 
-  (:export #:abort                            ; import
-           #:continue                         ; delete-package
-           #:delete-package                   ; rename-package, also a function above
-           #:import                           ; export, also a function above
-           #:keep-old                         ; use-package
-           #:shadow                           ; export, import, also a function above
-           #:take-new                         ; use-package
-           #:unintern                         ; export, import, also a function above
-           #:unuse-package))                  ; delete-package, also a function above
+  (:export #:abort                            ; offered by import.
+           #:continue                         ; offered by delete-package.
+           #:delete-package                   ; offered by rename-package and make-package.
+           #:import                           ; offered by export and unexport.
+           #:keep-old                         ; offered by use-package.
+           #:shadow                           ; offered by export and import.
+           #:take-new                         ; offered by use-package.
+           #:unintern                         ; offered by export and import.
+           #:unuse-package                    ; offered by delete-package.
+           #:use-value))                      ; offered by add-package-local-nickname.

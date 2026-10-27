@@ -46,6 +46,23 @@ Side Effects:
 The package system is modified.
 
 Exceptional Situations:
+
+conflicting-symbol-names
+
+  A correctable error of type package-error.
+
+  Signaled if any of the symbols being imported has the same name \(by
+  string=\) as another symbol already accessible in package, even if the
+  symbol is a shadowing symbol in package.
+
+  A 'shadow' option resolves the conflict by making the symbol being imported
+  a shadowing symbol.
+
+  An 'unintern' option resolves the conflict by uninterning the symbol already
+  present in package.
+
+  An 'abort' option resolves the conflict by not importing the symbol.
+
 Import signals a correctable error of type package-error if any of the
 symbols to be imported has the same name \(under string=\) as some
 distinct symbol \(under eql\) already accessible in the package, even if

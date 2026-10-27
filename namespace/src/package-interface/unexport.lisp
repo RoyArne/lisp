@@ -21,8 +21,9 @@ symbol-is-not-accessible
 
   A correctable error of type package-error.
 
-  Signaled if a symbol being unexported is not accessible in package and
-  offers an option to 'import' the symbol.")
+  Signaled if a symbol being unexported is not accessible in package.
+
+  An 'import' option corrects the error by importing the symbol.")
 
   (:method (symbols &optional (package *package*))
     (declare (type package-designator package))

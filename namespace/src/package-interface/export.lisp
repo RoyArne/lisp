@@ -24,16 +24,22 @@ symbol-is-not-accessible
 
   A correctable error of type package-error.
 
-  Signaled if a symbol being exported is not accessible in package and
-  offers an option to 'import' the symbol.
+  Signaled if a symbol being exported is not accessible in package.
+
+  An 'import' option corrects the error by importing the symbol.
 
 conflicting-symbol-names
 
   A correctable error of type package-error.
 
-  Signaled if there are any name conflicts. The 'unintern' option
-  resolves the conflict in favor of the symbol being exported. The
-  'shadow' option resolves it in favor of the other one.")
+  Signaled if exporting causes any name conflicts in packages that uses
+  package.
+
+  An 'unintern' option resolves the conflict in favor of the symbol being
+  exported by uninterning the other one.
+
+  A 'shadow' option resolves the conflict in favor of the other one by making
+  it a shadowing symbol.")
 
   (:method ((symbols list) &optional (package *package*))
     (declare (type package-designator package))

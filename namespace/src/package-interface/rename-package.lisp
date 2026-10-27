@@ -22,7 +22,9 @@ conflicting-package-names
   A correctable error of type package-error.
 
   Signaled if the new name is equal to any package name visible from
-  package. Offers an 'delete-package' option that deletes the conflicting
+  package \(by string=\).
+
+  A 'delete-package' option resolves the conflict by deleting the conflicting
   package.")
 
   (:method (package new-name)

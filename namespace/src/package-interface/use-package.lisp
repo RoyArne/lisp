@@ -25,11 +25,13 @@ conflicting-symbol-names
   A correctable error of type package-error.
 
   Signaled if one of the newly accessible symbols has the same name as one
-  already accessible. Two restarts are offered:
+  already accessible.
 
-  'keep-old' keeps the one already accessible by making it a shadowing symbol.
+  A 'keep-old' option resolves the conflict by making the one already
+  accessible a shadowing symbol.
 
-  'take-new' makes the newly accessible symbol a shadowing symbol.")
+  A 'take-new' option resolves the conflict by making the newly accessible
+  symbol a shadowing symbol.")
 
   (:method (to-use &optional (package *package*))
     (declare (type package-designator package))
