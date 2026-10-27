@@ -97,7 +97,7 @@ implementation, but tests are not complete yet.
 
   The :documentation and :size options are not implemented.
 
-- [ ] **do-symbols** (Macro)
+- [x] **do-symbols** (Macro)
 
 - [ ] **do-external-symbols** (Macro)
 

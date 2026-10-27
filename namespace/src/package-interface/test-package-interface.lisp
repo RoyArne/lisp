@@ -554,9 +554,97 @@
         (is-true (ns:use-package p3 p2))
         (signals ns:conflicting-symbol-names (ns:unintern s2 p2))))))
       
-      
-        
 
+;;; DO-SYMBOLS, DO-EXTERNAL-SYMBOLS, DO-ALL-SYMBOLS
+;;; ===============================================
+
+(test do-symbols-on-package
+  (with-packages (p1)
+    (let ((s1 (ns:intern "s1"))
+          (s2 (ns:intern "s2"))
+          (s3 (ns:intern "s3"))
+          (s4 (ns:intern "s4"))
+          (s5 (ns:intern "s5")))
+      (is-true (ns:export (list s1 s2 s3)))
+      ;; 1-3 :external, rest :internal. All 5 should be processed.
+      (let ((lst ()))
+        (ns:do-symbols (symbol (ns:find-package "p1") lst)
+          (push symbol lst))
+        (is (eql s1 (find s1 lst)))
+        (is (eql s2 (find s2 lst)))
+        (is (eql s3 (find s3 lst)))
+        (is (eql s4 (find s4 lst)))
+        (is (eql s5 (find s5 lst)))))))
+
+(test do-symbols-while-using-package
+  (with-packages (p1 p2)
+    (let ((s1 (ns:intern "s1"))
+          (s2 (ns:intern "s2"))
+          (s3 (ns:intern "s3"))
+          (s4 (ns:intern "s4" p2))
+          (s5 (ns:intern "s5" p2)))
+      ;; 1-3 :external in p1, 4 :external in p2, 5 :internal in p2. 1-4 should be processed once we use p2 from p1.
+      (is-true (ns:export (list s1 s2 s3)))
+      (is-true (ns:export s4 p2))
+      (is-true (ns:use-package p2 p1))
+      (let ((lst ()))
+        (ns:do-symbols (symbol (ns:find-package "p1") lst)
+          (push symbol lst))
+        (is (eql s1 (find s1 lst)))
+        (is (eql s2 (find s2 lst)))
+        (is (eql s3 (find s3 lst)))
+        (is (eql s4 (find s4 lst)))
+        (is-false (find s5 lst))))))
+
+(test do-symbols-tagbody
+  (with-packages (p1 p2)
+    (let ((s1 (ns:intern "s1"))
+          (s2 (ns:intern "s2"))
+          (s3 (ns:intern "s3"))
+          (s4 (ns:intern "s4" p2))
+          (s5 (ns:intern "s5" p2)))
+      (is-true (ns:export (list s1 s2 s3)))
+      (is-true (ns:export (list s4 s5) p2))
+      (is-true (ns:use-package p2 p1))
+      ;; 1-2 :external in p1, 3 :internal in p1, 4-5 :external in p2. At the
+      ;; end we should have processed 5 symbols, 3 from p1 and 2 from p2.
+      (let ((lst ()))
+        (ns:do-symbols (symbol (ns:find-package "p1") lst)
+          (cond
+            ((eql p1 (ns:symbol-package symbol))
+             (go symbol-from-p1))
+            (t
+             (go symbol-from-p2)))
+          (push 0 lst) ; always skipped
+          symbol-from-p2
+          (push 2 lst)
+          (go exit-point)
+          symbol-from-p1
+          (push 1 lst)
+          exit-point
+          (push 0 lst))
+        (is (eql 5 (count 0 lst)))
+        (is (eql 3 (count 1 lst)))
+        (is (eql 2 (count 2 lst)))))))
+
+;; (test do-external-symbols-on-package
+;;   (with-packages (p1)
+;;     (let ((s1 (ns:intern "s1"))
+;;           (s2 (ns:intern "s2"))
+;;           (s3 (ns:intern "s3"))
+;;           (s4 (ns:intern "s4"))
+;;           (s5 (ns:intern "s5")))
+;;       ;; 1-3 :external, rest :internal. 1-3 should be processed.
+;;       (is-true (ns:export (list s1 s2 s3)))
+;;       (let ((lst ()))
+;;         (ns:do-external-symbols (s (ns:find-package "p1") lst)
+;;           (push s lst))
+;;         (is (eql s1 (find s1 lst)))
+;;         (is (eql s2 (find s2 lst)))
+;;         (is (eql s3 (find s3 lst)))
+;;         (is-false (find s4 lst))
+;;         (is-false (find s5 lst))))))
+        
 ;;; USE-PACKAGE
 ;;; ===========
 ;;;
