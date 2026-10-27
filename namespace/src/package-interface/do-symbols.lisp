@@ -2,7 +2,7 @@
 
 (in-package #:namespace)
 
-(defmacro do-symbols ((var &optional (package '*package) (result-form 'nil)) &body body)
+(defmacro do-symbols ((var &optional (package '*package*) (result-form 'nil)) &body body)
   "Syntax:
 \(do-symbols \(var &optional package result-form\) &body body\)
 
@@ -43,7 +43,7 @@ var is bound to nil when result-form is evaluated."
                    do (,function-name symbol))
              (loop for used-package in (use-list ,package-variable)
                    do (loop
-                        for symbol being each hash-value of (external-symbols ,package-variable)
+                        for symbol being each hash-value of (external-symbols used-package)
                         unless (find symbol (shadowing-symbols ,package-variable))
                         do (,function-name symbol)))))
          (let ((,var nil))
