@@ -44,7 +44,7 @@ var is bound to nil when result-form is evaluated."
              (loop for used-package in (use-list ,package-variable)
                    do (loop
                         for symbol being each hash-value of (external-symbols used-package)
-                        unless (find symbol (shadowing-symbols ,package-variable))
+                        unless (shadowing-symbol? symbol ,package-variable)
                         do (,function-name symbol)))))
          (let ((,var nil))
            ,result-form)))))
