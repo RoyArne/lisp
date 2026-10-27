@@ -46,8 +46,8 @@ conflicting-symbol-names
     (declare (type package-designator package))
     (let ((package (resolve-package-designator package *package*)))
       (unless (find to-use (use-list package))
-        (loop for new-symbol being the hash-values in (external-symbols to-use)
-              do (multiple-value-bind (conflicting-symbol status)
+        (process-external-symbols (new-symbol to-use)
+          (multiple-value-bind (conflicting-symbol status)
                      (find-symbol (name new-symbol) package) 
                    (unless (or (null status)                                   ; no such symbol,
                                (eql new-symbol conflicting-symbol)             ; the same symbol, or, 

@@ -147,7 +147,7 @@
            #:package-use-list          ; Function             (implemented)
            #:package-used-by-list      ; Function             (implemented)
            ;; #:packagep                  ; Function             (implemented as package?)
-           #:package?
+           #:package?                  ; Function             (implemented)
            #:*package*                 ; Variable             (implemented)
            #:package-error             ; Condition Type       (implemented)
            #:package-error-package)    ; Function             (implemented)

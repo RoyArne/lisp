@@ -40,12 +40,6 @@ _describe what it does_.
 - I probably want a way to export packages, and resolve dotted package designators.
 - There are a few instances of direct access to internal hash-tables in the interface:
 
-do-all-symbols, do-external-symbols, do-symbols, and use-package all
-iterate across symbols in a package. Some across external, some
-internal and some both.
-
-This should probably be abstracted away in the internal-structure module.
-
 The status of individual functions in the package inteface is listed
 below. The meaning of each entry is:
 

@@ -34,7 +34,7 @@ var is bound to nil when result-form is evaluated."
                   ,@declarations
                   (tagbody ,@body-forms)))
            (let ((,package-variable (resolve-package-designator ,package)))
-             (loop for symbol being each hash-value of (external-symbols ,package-variable)
-                   do (,function-name symbol))))
+             (process-external-symbols (symbol ,package-variable)
+               (,function-name symbol))))
          (let ((,var nil))
            ,result-form)))))
