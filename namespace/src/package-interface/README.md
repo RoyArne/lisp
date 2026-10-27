@@ -38,9 +38,25 @@ _describe what it does_.
 - Name validation is missing. Consider [Unicode Security Mechanisms](http://www.unicode.org/reports/tr39/), [Unicode Identifiers and Syntax](https://www.unicode.org/reports/tr31/).
 - A way to copy the current contents of a running Lisps package system could be useful.
 - I probably want a way to export packages, and resolve dotted package designators.
+- There are a few instances of direct access to internal hash-tables in the interface:
 
-Below, symbols that are not crossed out ~~like this~~ have an initial
-implementation, but tests are not complete yet.
+do-all-symbols, do-external-symbols, do-symbols, and use-package all
+iterate across symbols in a package. Some across external, some
+internal and some both.
+
+This should probably be abstracted away in the internal-structure module.
+
+In the list(s) below, names that are crossed out ~~like this~~ have no
+implementation.
+
+Other names may have incomplete or complete implementations:
+
+- [x] this is implemented with test.
+
+- [ ] this has an initial implementation, but is missing tests.
+
+  And there may be other issues. There may be a note pointing out all
+  or some of the issues.
 
 ### Status of The Packages Dictionary Implementation
 
