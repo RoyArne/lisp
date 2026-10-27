@@ -2,7 +2,7 @@
 
 (in-package #:namespace)
 
-(defmacro do-external-symbols ((var &optional (package '*package) (result-form 'nil)) &body body)
+(defmacro do-external-symbols ((var &optional (package '*package*) (result-form 'nil)) &body body)
   "Syntax:
 \(do-external-symbols \(var &optional package result-form\) &body body\)
 
