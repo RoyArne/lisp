@@ -53,6 +53,23 @@
               (values symbol :external)
               (values nil nil))))))
 
+;;; Iterating Across Symbols
+;;;
+;;; We name them process-x to distinguish them from do-x-symbols.
+
+(defmacro process-internal-symbols ((symbol package) &body body)
+  `(loop for ,symbol being each hash-value of (internal-symbols ,package)
+         do (progn ,@body)))
+
+(defmacro process-external-symbols ((symbol package) &body body)
+  `(loop for ,symbol being each hash-value of (external-symbols ,package)
+         do (progn ,@body)))
+
+(defmacro process-shadowing-symbols ((symbol package) &body body)
+  `(loop for ,symbol in (shadowing-symbols ,package)
+         do (progn ,@body)))
+  
+         
 
 (declaim (ftype (function (symbol package)
                           boolean)
