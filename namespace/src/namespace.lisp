@@ -232,4 +232,3 @@
            #:take-new                         ; use-package
            #:unintern                         ; export, import, also a function above
            #:unuse-package))                  ; delete-package, also a function above
-  
