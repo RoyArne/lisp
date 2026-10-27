@@ -60,10 +60,9 @@ Other names may have incomplete or complete implementations:
 
 ### Status of The Packages Dictionary Implementation
 
-- [ ] **package** (System Class)
+- [x] **package** (System Class)
 
-  Implemented but tests are not written. Note that the class is
-  implemented in the classes module.
+  Note that the class is implemented in the classes module.
 
 - [ ] **export** (Function)
 
@@ -117,7 +116,7 @@ Other names may have incomplete or complete implementations:
 
 - [x] **do-external-symbols** (Macro)
 
-- [ ] **do-all-symbols** (Macro)
+- [x] **do-all-symbols** (Macro)
 
 - [x] **intern** (Function)
 
