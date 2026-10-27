@@ -41,15 +41,42 @@ We define a few variables to store and help navigate the package hierarchy:
 - \*keyword\*—the keyword package.
 - \*user\*—the initial current package. empty, uses \*lisp\* and \*keyword\*.
 
+
 ## Package and Symbol Manipulation
 
-Functions in the package-interface and symbol-interface module relies
-on the functionality within to locate, create and delete packages,
-designate local nicknames, and share symbols.
+Operations in the package interface, like find-symbol, export, intern,
+import and shadow relies on "symbol-manipulation.lisp" to manipulate
+the relevant slots in package objects
 
-Package and symbol manipulators accept their work without checking for
-errors: the package-interface and symbol-interface modules are
-responsible for signaling and correcting errors.
+Slots related to the package hierarchy are manipulated through
+"package-manipulation.lisp".
+
+
+## Package Manipulation
+
+The file "package-manipulation.lisp" implements functions for
+
+- adding and removing nicknames,
+- producing lists of packages that are accessible,
+- searching for packages in the above lists,
+- adding and removing packages from the hierarchy, and
+- manipulating the package use and used by lists.
+
+
+No error checking is performed in the above operations: the package
+interface is responsible for that.
+
+
+## Symbol Manipulation
+
+The "symbol-manipulation.lisp" file is implements functions for
+
+- adding and removing symbols from packages, and
+- searching for symbols.
+
+No error checking is performed, the package interface is responsible
+for that.
+
 
 ## Status
 
@@ -61,3 +88,6 @@ Better type checking for \*packages\*, \*lisp\* and \*keyword\* is required:
 
 However, type definitions are not implemented yet, and they don't
 belong in the namespace system.
+
+Name validation likely goes in this module, it is manipulation of the
+name slots in symbols and packages.
