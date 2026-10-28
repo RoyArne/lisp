@@ -14,6 +14,11 @@
                           #:string
                           #:string=)
 
+  ;; We shadow the program-error condition from Common Lisp, in favor of our
+  ;; own definition from the "system" system.
+  
+  (:shadowing-import-from #:system.condition
+                          #:program-error)
   
   ;;   We shadow symbols listed in chapter "10.2 The Symbols Dictionary" in
   ;;   the Common Lisp Hyperspec.
