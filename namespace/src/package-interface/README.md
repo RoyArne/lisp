@@ -35,10 +35,16 @@ _describe what it does_.
 ## Status
 
 - Test definitions are in progress.
-- Name validation is missing. Consider [Unicode Security Mechanisms](http://www.unicode.org/reports/tr39/), [Unicode Identifiers and Syntax](https://www.unicode.org/reports/tr31/).
-- A way to copy the current contents of a running Lisps package system could be useful.
-- I probably want a way to export packages, and resolve dotted package designators.
-- There are a few instances of direct access to internal hash-tables in the interface:
+- Name validation is missing. Consider [Unicode Security
+  Mechanisms](http://www.unicode.org/reports/tr39/), [Unicode
+  Identifiers and Syntax](https://www.unicode.org/reports/tr31/).
+- A way to copy the current contents of a running Lisps package system
+  could be useful.
+- I probably want a way to export packages, and resolve dotted package
+  designators.
+- I need to enumerate all functions that could be used to make us
+  unable to find system packages. This is part of an effort to make a
+  package locking mechanism.
 
 The status of individual functions in the package inteface is listed
 below. The meaning of each entry is:

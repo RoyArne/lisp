@@ -35,11 +35,47 @@ resolutors.
 
 We define a few variables to store and help navigate the package hierarchy:
 
-- \*packages\*—the list of top-level packages.
-- \*package\*—the current package.
 - \*lisp\*—expected to hold the system library (for example "COMMON-LISP").
 - \*keyword\*—the keyword package.
 - \*user\*—the initial current package. empty, uses \*lisp\* and \*keyword\*.
+- \*package\*—the current package.
+- \*packages\*—the list of top-level packages.
+
+### \*lisp\*
+
+This is a system package. We do not have a special class of system
+packages, but the package held in this variable receives special
+treatment by delete-package:
+
+- a package-is-a-system-package error is signaled if we attempt to
+  delete it. An option allows us to 'continue' without deleting the
+  package.
+
+We should consider special treatment by other functions as well. For
+example, what are the consequences of renaming the \*lisp\* package?
+
+- initially, packages that are already loaded will function as they
+  did before: our packages stores references to package objects, not
+  to their names.
+- further name resolution becomes impossible, which means new packages
+  cannot be loaded (unless they do not depend on the system library at
+  all).
+
+This is not desirable.
+
+Moving on we should first enumerate which functions could leave name
+resolution impossible.
+
+Then we probably need to implement a system like [SBCLs package lock
+mechanism](https://www.sbcl.org/manual/#package-locks). We could use
+our existing variables, but this is neither flexible nor robust:
+
+- if a package should not be tampered with it should not rely on
+  external mechanisms to say that,
+
+- a system of special variables means user cannot implement their own
+  locks (not easily anyway, they'd have to wrap the package interface
+  inside their own interface).
 
 
 ## Package and Symbol Manipulation
