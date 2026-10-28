@@ -179,6 +179,25 @@
   ;; (:shadowing-import-from string-designator string-designator…), zero or more
   (any-import-from-option :shadowing-import-from options))
 
+(defmacro execute-import-option (function import-options importing-package)
+  (let ((from-package (common-lisp:gensym "IMPORT-FROM"))
+        (string (common-lisp:gensym "STRING"))
+        (strings (common-lisp:gensym "STRINGS"))
+        (symbol (common-lisp:gensym "SYMBOL"))
+        (status (common-lisp:gensym "STATUS")))
+    `(loop for ,strings in ,import-options
+           do (let ((,from-package (resolve-package-designator (first ,strings))))
+                (,function (loop for ,string in (rest ,strings)
+                                 collect (multiple-value-bind (,symbol ,status)
+                                             (find-symbol ,string ,from-package)
+                                           (if (null ,status)
+                                               (error 'symbol-is-not-accessible
+                                                      :symbol ,string
+                                                      :package ,from-package
+                                                      :context ,importing-package)
+                                               ,symbol)))
+                           ,importing-package)))))
+
 (declaim (ftype (function (list)
                           list)
                 local-nicknames-options))
@@ -200,11 +219,7 @@
 	(resolved-name (common-lisp:gensym "NEW-NAME"))
 	(home-package (common-lisp:gensym "HOME-PACKAGE"))
         (nicknames (common-lisp:gensym "NICKNAMES"))
-	(string (common-lisp:gensym "STRING"))
-	(strings (common-lisp:gensym "STRINGS"))
-        (import-from-package (common-lisp:gensym "IMPORT-FROM-PACKAGE"))
-        (symbol (common-lisp:gensym "SYMBOL"))
-        (status (common-lisp:gensym "STATUS")))
+	(string (common-lisp:gensym "STRING")))
     `(eval-when (:compile-toplevel :load-toplevel :execute)
 
        (let* ((,resolved-name ,(resolve-string-designator name))
@@ -236,47 +251,24 @@
             (setf (slot-value ,package 'name) ,resolved-name)
             (add-package ,package ,home-package)))
 
-         ;; Next we resolve the local nicknames.
+         ;; Next we resolve the local nicknames. We want the nicknames
+         ;; available for shadowing-import, use and import-from below.
          (loop for ,nicknames in ',(local-nicknames-options options)
                do (add-package-local-nickname (first ,nicknames)
                                               (resolve-package-designator (second ,nicknames))
                                               ,package))
 	 
-	 ;; The order in which the remaining options appear in a defpackage
-	 ;; form is irrelevant. The order in which they are executed is as
-	 ;; follows:
+	 ;; The remaining options must be executed in the following order:
 
 	 ;; 1. :shadow and :shadowing-import-from.
          (shadow ',(shadow-option options) ,package)
-         (loop for ,strings in ',(shadowing-import-from-options options)
-               do (let ((,import-from-package (resolve-package-designator (first ,strings))))
-                    (shadowing-import (loop for ,string in (rest ,strings)
-                                            collect (multiple-value-bind (,symbol ,status)
-                                                        (find-symbol ,string ,import-from-package)
-                                                      (if (null ,status)
-                                                          (error 'symbol-is-not-accessible
-                                                                 :symbol ,string
-                                                                 :package ,import-from-package
-                                                                 :context ,package)
-                                                          ,symbol)))
-                                    ,package)))
+         (execute-import-option shadowing-import ',(shadowing-import-from-options options) ,package)
 	 
 	 ;; 2. :use.
          (use-package ',(use-option options) ,package)
 
 	 ;; 3. :import-from and :intern.
-         (loop for ,strings in ',(import-from-options options)
-               do (let ((,import-from-package (resolve-package-designator (first ,strings))))
-                    (import (loop for ,string in (rest ,strings)
-                                  collect (multiple-value-bind (,symbol ,status)
-                                              (find-symbol ,string ,import-from-package)
-                                            (if (null ,status)
-                                                (error 'symbol-is-not-accessible
-                                                       :symbol ,string
-                                                       :package ,import-from-package
-                                                       :context ,package)
-                                                ,symbol)))
-                            ,package)))
+         (execute-import-option import ',(import-from-options options) ,package)
          (loop for ,string in ',(intern-option options)
                do (intern ,string ,package))
          
@@ -289,7 +281,7 @@
 	 ;; We ignore :size and :documentation for now.
 	   
 	 ,package))))
-
+    
 
 ;; defpackage defined-package-name [[option]] => package
 
@@ -376,48 +368,28 @@ symbol-name—a string designator.
 The order in which the options appear in a defpackage form is irrelevant. The
 order in which they are executed is as follows:
 
-1. :shadow and :shadowing-import-from.
-2. :use.
-3. :import-from and :intern.
-4. :export.
+1. :home.
+2. :local-nicknames
+3. :shadow and :shadowing-import-from.
+4. :use.
+5. :import-from and :intern.
+6. :export.
 
-Shadows are established first, since they might be necessary to block spurious
-name conflicts when the :use option is processed. The :use option is executed
-next so that :intern and :export options can refer to normally inherited
-symbols. The :export option is executed last so that it can refer to symbols
-created by any of the other options; in particular, shadowing symbols and
-imported symbols can be made external.
+The new package is placed in its home first, because that establishes which
+packages are accessible to the :local-nicknames option. Local nicknames are
+next since they may be referenced by the :shadowing-import-from, :import-from,
+and :use options.
+
+We execute :shadow and :shadowing-import-from next because they might be
+necessary to block name conflicts from the :use option. Following shadows we
+execute the :use option, so that :intern and :export can refer to inherited
+symbols. We then execute the :intern option and lastly the :export option so
+that it can refer to symbols made accessible by the other options.
 
 If a defpackage form appears as a top level form, all of the actions normally
 performed by this macro at load time must also be performed at compile time.
 
-Examples:
-
- (defpackage \"MY-PACKAGE\"
-   (:nicknames \"MYPKG\" \"MY-PKG\")
-   (:use \"COMMON-LISP\")
-   (:shadow \"CAR\" \"CDR\")
-   (:shadowing-import-from \"VENDOR-COMMON-LISP\"  \"CONS\")
-   (:import-from \"VENDOR-COMMON-LISP\"  \"GC\")
-   (:export \"EQ\" \"CONS\" \"FROBOLA\")
-   )
- 
- 
- (defpackage my-package
-   (:nicknames mypkg :MY-PKG)  ; remember Common Lisp conventions for case
-   (:use common-lisp)          ; conversion on symbols
-   (:shadow CAR :cdr #:cons)                              
-   (:export \"CONS\")            ; this is the shadowed one.
-   )
-
-Affected By:
-
-Existing packages.
-
 Exceptional Situations:
-
-If one of the supplied :nicknames already refers to an existing package, an
-error of type package-error is signaled.
 
 An error of type program-error should be signaled if :size or :documentation
 appears more than once.
