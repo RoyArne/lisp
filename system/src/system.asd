@@ -7,6 +7,10 @@
   :maintainer "Roy Arne Gangstad <roy.gangstad@gmail.com>"
   :license "GNU Affero General Public License, version 3."
   :serial t
-  :components ((:module sequence
+  :components ((:module condition
+                :serial t
+                :components ((:file "condition")))
+
+               (:module sequence
                 :serial t
                 :components ((:file "vector")))))
