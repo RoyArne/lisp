@@ -69,28 +69,84 @@ package.
 - a list of package objects that inherits symbols from this package.
 
 The **internal-symbols**, **external-symbols**, and
-**shadowing-symbols** slots store symbol objects. Symbols stored here
-are _present_ in package, either as _internal_ or _external_ symbols.
+**shadowing-symbols** slots store symbol objects which are _present_
+in package, either as _internal_ or _external_ symbols.
 
-A symbol being present in a package does not mean that it is their
-home package, the symbol may have been imported.
+A symbol must not be stored in both **internal-symbols** and
+**external-symbols**.
+
+A symbol being _present_ does not mean that it is their home package,
+the symbol may have been imported.
 
 **internal-symbols**
 
-- implemented as hash-table using symbol names as keys and objects as
-  values. Symbols stored here are not accessible by means of
-  use-package (i.e. packages in the **used-by-list** cannot see these
-  symbols).
+- implemented as a hash-table. Symbol names are keys and objects are
+  values.
+- Symbols stored here are not accessible by means of use-package
+  (i.e. packages in the **used-by-list** cannot see these symbols).
 
 **external-symbols**
 
-- implemented as hash-table using symbol names as keys and objects as
-  values. Symbols stored here _are_ accessible by means of use-package
+- implemented like **internal-symbols**.
+- Symbols stored here _are_ accessible by means of use-package
   (i.e. packages in the **used-by-list** _can_ see these symbols).
 
 **shadowing-symbols**
 
-- a list of symbol objects. Symbols in this list must also be present
-  in either **internal-symbols** or **external-symbol**. Being present
-  in this list means that the symbol takes precedence in a potential
-  name conflict.
+- a list of symbol objects.
+- Symbols in this list must also be present in either
+  **internal-symbols** or **external-symbol**.
+- Being present in this list means that the symbol takes precedence in
+  a potential name conflict.
+
+## Exporting and Extending Packages
+
+The hierarchy as designed does not allow access to internal packages
+from outside a package.
+
+Say the current package is a top-level package "P" with two internal
+packages, "P1" and "P2". The top-level looks like this: ("P" "A" "B").
+
+list-all-packages would return ("P1" "P2" "P" "A" "B") even if each of
+those packages had their own internal packages.
+
+I'd like to implement a method to make internal packages
+accessible. First, by using "dotted" package names, for example using
+"unicode.utf-8" to refer to an internal "utf-8" package in the
+"unicode" package.
+
+This would work by first checking if the "unicode" package was
+accessible. If it was, we'd check if "utf-8" had been published by the
+"unicode" package before allowing access.
+
+In terms of **defpackage** it might look something like this:
+
+```
+(defpackage "P"
+  (:publish "P1" "P2")
+  (:extend "P1" "A-SYMBOL" "B-SYMBOL")
+  (:extend "P2" "B-SYMBOL" "C-SYMBOL"))
+
+(defpackage "P1"
+  (:export "A-SYMBOL" "B-SYMBOL"))
+
+(defpackage "P2"
+  (:export "B-SYMBOL" "C-SYMBOL"))
+```
+
+This means we need forward references, because the home package "P"
+must be defined before the internal packages "P1" and "P2" (or we'de
+need forward references in "P1" and "P2", but probably messier).
+
+The forward references would be names, resolved as soon as "P1"/"P2"
+made "P" their home package.
+
+It would be an error if we tried to access any internal package before
+their home package resolved the forward references.
+
+Simply having a forward reference is not an error, and if it is never
+accessed we may end up with a technically broken, but functioning
+system.
+
+Extending packages means we forcibly make them import the symbols we
+are extending them with.
