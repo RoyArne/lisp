@@ -76,7 +76,8 @@ A symbol must not be stored in both **internal-symbols** and
 **external-symbols**.
 
 A symbol being _present_ does not mean that it is their home package,
-the symbol may have been imported.
+the symbol may have been imported. Additionally, a symbol does not
+have to be external in order to be imported.
 
 **internal-symbols**
 
@@ -84,6 +85,7 @@ the symbol may have been imported.
   values.
 - Symbols stored here are not accessible by means of use-package
   (i.e. packages in the **used-by-list** cannot see these symbols).
+- They can be imported by other packages.
 
 **external-symbols**
 
@@ -99,59 +101,97 @@ the symbol may have been imported.
 - Being present in this list means that the symbol takes precedence in
   a potential name conflict.
 
-## Exporting and Extending Packages
+## Publishing and Extending Packages
 
-The hierarchy as designed does not allow access to internal packages
-from outside a package.
+Our hierarchy prevents access to internal packages of other
+packages. Say our top-level looks like this:
 
-Say the current package is a top-level package "P" with two internal
-packages, "P1" and "P2". The top-level looks like this: ("P" "A" "B").
+- **\*packages\*** → ("A" "B" "C")
 
-list-all-packages would return ("P1" "P2" "P" "A" "B") even if each of
-those packages had their own internal packages.
+and "A" has two internal packages ("A1" "A2"). The result of
+**list-all-packages** depends on the current package:
 
-I'd like to implement a method to make internal packages
-accessible. First, by using "dotted" package names, for example using
-"unicode.utf-8" to refer to an internal "utf-8" package in the
-"unicode" package.
+- **\*package\*** → "A"
 
-This would work by first checking if the "unicode" package was
-accessible. If it was, we'd check if "utf-8" had been published by the
-"unicode" package before allowing access.
+  (**list-all-packages**) → ("A1" "A2" "A" "B" "C")
+  
+- **\*package\*** → "B", "C"
 
-In terms of **defpackage** it might look something like this:
+  (**list-all-packages**) → ("A" "B" "C")
+
+We locate packages within **list-all-packages** by means of
+**find-package** (with local nicknames in the current package taking
+precedence). Our goal with publishing and extending packages is to
+devise a method that
+
+- allows a package to make any package in its internal list visible to
+  **find-Package** (publishing).
+- allows a package to place symbols into any package in its internal
+  list (extending).
+
+Internal packages cannot be created (by **defpackage** or
+**make-package**) before their home package exists. This means we will
+need forward references (we will use names), but more on that later.
+
+### Publishing Packages
+
+Our initial plan involves two functions placed in the
+package-interface module:
+
+- (**publish-package** package-to-publish publishing-package) → t
+- (**unpublish-package** published-package publishing-package) → t
+
+where package-to-publish, published-package and publishing-package are
+**package-designators**.
+
+We also want **find-package** to locate our published packages. We
+will do so by making periods in a package name significant:
+
+- "A.A1" is used to locate the "A1" package inside the "A" package.
+
+This will work by first locating the "A" package. Once found, we first
+verify that it publishes a "A1" package. From here three things can
+happen:
+
+1. "A" does not have an "A1" package published.
+
+   We could signal a package-does-not-exist, or maybe a
+   package-not-accessible error. Maybe signal not accessible if there
+   is a package of that name in the internal-list, otherwise use does
+   not exist.
+
+2. "A" does indeed publish an "A1", but it is an unresolved reference
+   to "A1" (i.e. we have the name but the internal package does not
+   exist).
+
+   We could signal something like package-does-not-exist or
+   package-is-unresolved. We probably want to be explicit about
+   unresolved references, maybe a subclass of package-does-not-exist.
+   
+3. "A" has a resolved reference to "A1", and **find-package** returns
+   it.
+
+from here we could repeat the above steps to find internal packages of
+"A1" and so on.
+
+A defpackage option will be added (making use of **publish-package**):
 
 ```
-(defpackage "P"
-  (:publish "P1" "P2")
-  (:extend "P1" "A-SYMBOL" "B-SYMBOL")
-  (:extend "P2" "B-SYMBOL" "C-SYMBOL"))
-
-(defpackage "P1"
-  (:export "A-SYMBOL" "B-SYMBOL"))
-
-(defpackage "P2"
-  (:export "B-SYMBOL" "C-SYMBOL"))
+(defpackage "A"
+  (:publish "A1"))
 ```
 
-This means we need forward references, because the home package "P"
-must be defined before the internal packages "P1" and "P2" (or we'de
-need forward references in "P1" and "P2", but probably messier).
+Finally we will store unresolved references and published packages in
+slots added to the package class:
 
-The forward references would be names, resolved as soon as "P1"/"P2"
-made "P" their home package.
-
-It would be an error if we tried to access any internal package before
-their home package resolved the forward references.
-
-Simply having a forward reference is not an error, and if it is never
-accessed we may end up with a technically broken, but functioning
-system.
-
-Extending packages means we forcibly make them import the symbols we
-are extending them with.
+- a list, **published-packages** will do for resolved packages.
+- we will also add a list of unresolved references, maybe
+  **unresolved-publications**?
 
 ### Extending Packages
+
+
+### Earlier Notes on Extending Packages
 
 Extending a package makes symbols from the home package available to
 the named package. This is distinct from exporting which makes symbols
