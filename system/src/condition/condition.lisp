@@ -13,5 +13,5 @@
             :documentation "A string used to report this condition."
             :type string))
   (:report (lambda (condition stream)
-             (format stream string))))
+             (format stream (program-error-message condition)))))
    
