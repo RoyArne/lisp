@@ -94,3 +94,20 @@
                              (:file "internal-structure")
                              (:file "symbol-interface")
                              (:file "package-interface")))))
+
+(defsystem "namespace/tests"
+  :name "test-namespace"
+  :serial t
+  :depends-on ("fiveam" "namespace")
+  :components ((:file "test-namespace")
+               
+               (:module classes
+                :serial t
+                :depends-on ("test-namespace")
+                :components ((:file "test-classes")))
+               
+               (:module package-interface
+	        :serial t
+	        :depends-on ("test-namespace")
+	        :components ((:file "test-package-interface")))))
+  

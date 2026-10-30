@@ -1222,6 +1222,36 @@
 
 ;;; DEFPACKAGE
 ;;; ==========
+;;;
+;;; A defpackage form using all options:
+;;;
+;;; (defpackage #:package-name
+;;;
+;;;   (:local-nicknames (#:nickname-1 #:actual-name-1)
+;;;                     (#:nickname… #:actual-name…)
+;;;                     (#:nickname-n #:actual-name-n))
+;;;
+;;;   (:home #:home-package)
+;;;
+;;;   (:shadow #:shadow-symbol-1 #:shadow-symbol… #:shadow-symbol-n)
+;;;
+;;;   (:shadowing-import-from #:shadowing-import-from-package
+;;;                           #:shadowing-import-symbol-1 #:shadowing-import-symbol… #:shadowing-import-symbol-n)
+;;;
+;;;   (:use #:package-to-use-1 #:package-to-use… #:package-to-use-n)
+;;;
+;;;   (:import-from #:import-from-package
+;;;                 #:import-symbol-1 #:import-symbol… #:import-symbol-n)
+;;;
+;;;   (:intern #:intern-symbol-1 #:intern-symbol… #:intern-symbol-n)
+;;;
+;;;   (:export #:export-symbol-1 #:export-symbol… #:export-symbol-n)
+;;;
+;;;   (:size 64)
+;;;
+;;;   (:documentation "A documentation string."))
+;;;
+  
 
 (test defpackage-no-options
   (with-packages (p1)

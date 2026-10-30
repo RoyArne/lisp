@@ -60,13 +60,10 @@ Tests are distributed in one file per component, named
 "test-\<component name\>.lisp". For example
 "test-package-interface.lisp" in "src/package-interface".
 
-There is no system definition for the tests. In order to run them, one must first
+To load the tests, do
 
-- (ql:quickload "fiveam") ; the test framework
-
-And then manually load the test files, starting with
-"test-namespace.lisp". The other components can be loaded in any
-order, they do not depend on eachother.
+- (ql:quickload "namespace/tests")
+- (fiveam:run! 'test-namespace:namespace)
 
 
 ## The Package Hierarchy

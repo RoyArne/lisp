@@ -2,6 +2,7 @@
 (defpackage #:test-namespace
   (:use #:common-lisp)
   (:local-nicknames (#:ns #:namespace))
+  (:export #:namespace)
   (:import-from #:fiveam
                 #:def-suite
                 #:in-suite
