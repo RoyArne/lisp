@@ -21,6 +21,64 @@
 (defmethod string ((object common-lisp:symbol))
   (string (common-lisp:string object)))
 
+;;; Allow our comparison functions to work on common lisp strings
+
+(defmethod string= ((string common-lisp:string) object)
+  (string= (string string) object))
+
+(defmethod string= (object (string common-lisp:string))
+  (string= object (string string)))
+
+(defmethod string≠ ((string common-lisp:string) object)
+  (string≠ (string string) object))
+
+(defmethod string≠ (object (string common-lisp:string))
+  (string≠ object (string string)))
+
+(defmethod string< ((string common-lisp:string) object)
+  (string< (string string) object))
+
+(defmethod string< (object (string common-lisp:string))
+  (string< object (string string)))
+
+(defmethod string≤ ((string common-lisp:string) object)
+  (string≤ (string string) object))
+
+(defmethod string≤ (object (string common-lisp:string))
+  (string≤ object (string string)))
+
+(defmethod string> ((string common-lisp:string) object)
+  (string> (string string) object))
+
+(defmethod string> (object (string common-lisp:string))
+  (string> object (string string)))
+
+(defmethod string≥ ((string common-lisp:string) object)
+  (string≥ (string string) object))
+
+(defmethod string≥ (object (string common-lisp:string))
+  (string≥ object (string string)))
+
+(defmethod string-equal ((string common-lisp:string) object)
+  (string-equal (string string) object))
+
+(defmethod string-equal (object (string common-lisp:string))
+  (string-equal object (string string)))
+
+(defmethod string-not-equal ((string common-lisp:string) object)
+  (string-not-equal (string string) object))
+
+(defmethod string-not-equal (object (string common-lisp:string))
+  (string-not-equal object (string string)))
+
+(defmethod string-less? ((string common-lisp:string) object)
+  (string-less? (string string) object))
+
+(defmethod string-greater? (object (string common-lisp:string))
+  (string-greater? object (string string)))
+
+
+
 ;; Make custom hash-table tests for our string class.
 
 (defun case-sensitive-string-test (string1 string2)
