@@ -26,6 +26,7 @@
                 :serial t
                 :depends-on ("namespace" classes conditions)
                 :components ((:file "designator-types")
+                             (:file "name-validation")
                              (:file "initial-packages-and-locations")
                              (:file "package-manipulation") ; :depends-on ("designator-types")
                              (:file "resolve-string-designator")  ; :depends-on ("designator-types")

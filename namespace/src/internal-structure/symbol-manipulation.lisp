@@ -79,6 +79,9 @@
   (and (find symbol (shadowing-symbols package)) t))
     
 ;;; Adding Symbols
+;;;
+;;; Added symbols replaces any existing symbols in internal-symbols and
+;;; external-symbols.
 
 (declaim (inline add-symbol-to-table)
          

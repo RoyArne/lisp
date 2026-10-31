@@ -148,5 +148,5 @@ package-is-in-use
     ;; Remove package from the used-by-list of packages it is using.
     (clear-use-list! package)
     ;; Set the package name to NIL
-    (setf (slot-value package 'name) nil)
+    (setf (name package) nil)
     t))

@@ -36,6 +36,7 @@
   (values))
 
 (defun remove-local-nickname! (old-nickname package)
+  ;; Returns t if a nickname was removed.
   (with-slots (local-nicknames) package
     (let ((nickname (find-local-nickname old-nickname package)))
       (when nickname

@@ -69,23 +69,23 @@ conflicting-package-names
     (declare (type list use)
 	     (type home-designator home)
              (type boolean home-supplied?))
-    (let ((new (make-instance 'package))
-          (home (resolve-home-designator (if home-supplied? home (home-package *package*)))))
-      (let ((conflict (find-conflicting-package name home)))
-        (setf (slot-value new 'name) (if conflict
-                                         (restart-case
-                                             (error 'conflicting-package-names
-		                                    :package conflict
-		                                    :context home
-		                                    :name name)
-	                                   (delete-package ()
-	                                     :report (lambda (stream)
-		                                       (format stream "Delete ~S." conflict))
-	                                     :test (lambda (condition)
-		                                     (typep condition 'conflicting-package-names))
-	                                     (delete-package conflict)
-	                                     name))
-                                         name)))
-      (add-package new home)
-      (use-package use new)
-      new)))
+    (let ((new-package (make-instance 'package))
+          (home-package (resolve-home-designator (if home-supplied? home (home-package *package*)))))
+      (let ((conflict (find-conflicting-package name home-package)))
+        (setf (name new-package) (if conflict
+                                     (restart-case
+                                         (error 'conflicting-package-names
+		                                :package conflict
+		                                :context home-package
+		                                :name name)
+	                               (delete-package ()
+	                                 :report (lambda (stream)
+		                                   (format stream "Delete ~S." conflict))
+	                                 :test (lambda (condition)
+		                                 (typep condition 'conflicting-package-names))
+	                                 (delete-package conflict)
+	                                 name))
+                                     name)))
+      (add-package new-package home-package)
+      (use-package use new-package)
+      new-package)))

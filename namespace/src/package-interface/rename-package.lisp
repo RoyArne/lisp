@@ -34,18 +34,18 @@ conflicting-package-names
   (:method ((package package) (new-name string))
     (unless (string= new-name (name package))
       (let ((conflict (find-conflicting-package new-name package)))
-        (setf (slot-value package 'name) (if conflict
-                                             (restart-case
-                                                 (error 'conflicting-package-names
-		                                        :package conflict
-		                                        :context package
-		                                        :name new-name)
-	                                       (delete-package ()
-	                                         :report (lambda (stream)
-		                                           (format stream "Delete ~S." conflict))
-	                                         :test (lambda (condition)
-		                                         (typep condition 'conflicting-package-names))
-	                                         (delete-package conflict)
-	                                         new-name))
-                                             new-name))))
+        (setf (name package) (if conflict
+                                 (restart-case
+                                     (error 'conflicting-package-names
+		                            :package conflict
+		                            :context package
+		                            :name new-name)
+	                           (delete-package ()
+	                             :report (lambda (stream)
+		                               (format stream "Delete ~S." conflict))
+	                             :test (lambda (condition)
+		                             (typep condition 'conflicting-package-names))
+	                             (delete-package conflict)
+	                             new-name))
+                                 new-name))))
     package))
