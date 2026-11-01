@@ -2,298 +2,547 @@
 
 (in-package #:namespace)
 
+(declaim (type list *defpackage-options*)
+
+         (ftype (function (list)
+                          boolean)
+                defpackage.options?))
+
+;;; defpackage-options?
+;;; ===================
+;;;
+;;; Checks that every element of our options is a list, and that the first
+;;; element of each is one of the keywords in *defpackage-options*.
+;;;
+;;; We want to signal a correctable program-error for options we do not
+;;; understand. Named continue or ignore?
+
+(defparameter *defpackage-options*
+  '(:home
+    :local-nicknames
+    :extend :shadow :shadowing-import-from :use :import-from :intern :export
+    :publish
+    :documentation
+    :size))
+
+(defun defpackage-options? (options) ; returns t
+  (loop for option in options
+        if (listp option)
+        do (unless (find (first option) *defpackage-options*)
+             ;; FIXME: add restarts
+             (error 'program-error :message (format nil
+                                                    "Unkown defpackage option~%  ~S."
+                                                    option)))
+        else
+        do (error 'program-error :message (format nil
+                                                  "The defpackage option~%  ~S~%~
+                                                   is not in the form~%  (:name value*)."
+                                                  option))
+        finally (return t)))
+
+
+;;; Collecting Option Arguments fo Parsing
+;;; ======================================
+;;;
+;;; Signals an error of type program-error if any option is not a list
+;;; (defpackage-options? checks for this, but we keep the checks in case we call
+;;; these independently).
+;;;
+;;; Any option without arguments is treated as not being supplied at all.
+
 (declaim (ftype (function (common-lisp:symbol list)
-                          boolean)
-                option-present?))
-
-(defun option-present? (name options)
-  (and (find name options :key 'first) t))
-
-(declaim (inline option-name option-values)
-
-         (type list *defpackage-option-names*)
-
-         (ftype (function (list)
-                          common-lisp:symbol)
-                option-name)
-
-         (ftype (function (common-lisp:symbol list)
-                          boolean)
-                named-option?)
-
-         (ftype (function (list)
                           list)
-                option-values)
+                concatenate-option-arguments
+                list-option-arguments))
 
-         (ftype (function (t)
+(defun concatenate-option-arguments (name options)
+  ;; Concatenate the arguments of all name instances into a single list.
+  ;;
+  ;; ((:shadowing-import-from "FROM" "S1" "S2" "S3")
+  ;;  (:shadowing-import-from "FROM" "S1" "S2" "S3"))
+  ;;
+  ;; becomes
+  ;;
+  ;; ("FROM" "S1" "S2" "S3" "FROM" "S1" "S2" "S3")
+  (handler-case
+      (mapcan #'(lambda (option)
+                  (when (eql name (first option))
+                    (rest option)))
+              options)
+    (type-error ()
+      (error 'program-error :message (format nil
+                                             "Cannot parse the~%  ~S option~%~
+                                              because the options~%  ~S~%~
+                                              are malformed."
+                                             name options)))))
+
+(defun list-option-arguments (name options)
+  ;; List the arguments of all name instances.
+  ;;
+  ;; ((:shadowing-import-from "FROM" "S1" "S2" "S3")
+  ;;  (:shadowing-import-from "FROM" "S1" "S2" "S3"))
+  ;;
+  ;; becomes
+  ;;
+  ;; (("FROM" "S1" "S2" "S3")
+  ;;  ("FROM" "S1" "S2" "S3"))
+  (handler-case
+      (mapcan #'(lambda (option)
+                  (when (eql name (first option))
+                    (list (rest option))))
+              options)
+    (type-error ()
+      (error 'program-error :message (format nil
+                                             "Cannot parse the~%  ~S option~%~
+                                              because the options~%  ~S~%~
+                                              are malformed."
+                                             name options)))))
+
+
+
+;;; Getting Specific Options and Executing Them
+;;; ===========================================
+;;;
+;;; We use a pair of functions, parse-<name>-option and execute-<name>-option,
+;;; to retreive the arguments to each option and apply them to the package
+;;; being defined.
+;;;
+;;; The order in which the options appear in a defpackage form is irrelevant. The
+;;; order in which they are executed is as follows:
+;;;
+;;; 1. :home.
+;;;
+;;;    Establish which packages can be referenced by later options. Executing
+;;;    the home option places the package in the system.
+;;;
+;;; 2. :local-nicknames
+;;;
+;;;    Make local nicknames available for the options below.
+;;;
+;;; 3a. A package being extended executes its side of the
+;;;     :extend option.
+;;;
+;;;    This is not implemented yet, but will probably be done by calling
+;;;
+;;;    (extend symbol-list package-being-extended &optional extending-package)
+;;;
+;;;    We need a function to retreive the symbol list from the
+;;;    extending-package (i.e. the home package).
+;;;
+;;;    Make any symbols it is extended by available for :shadow, :intern, and
+;;;    :export.
+;;;
+;;; 3b. A package being published executes its side of the :publish option.
+;;;
+;;;     This is not implemented yet, but will probably be done by calling
+;;;
+;;;     (publish published-package &optional publishing-package)
+;;;
+;;; Before executing the options :shadow, :shadowing-import-from,
+;;; :import-from, and :intern we check that their symbol-name arguments are
+;;; disjoin.
+;;;
+;;; 4. :shadow and :shadowing-import-from
+;;;
+;;;    We shadow symbols to prevent name conflicts arising from the :use
+;;;    option.
+;;;
+;;; 5. :use
+;;;
+;;;    We execute the :use option to make inherited symbols available for the
+;;;    :intern option.
+;;;
+;;; Before executing the :intern and :export options we check that their
+;;; symbol-name arguments are disjoint.
+;;;
+;;; 6. :import-from and :intern
+;;;
+;;;    The :import-from and :intern options finalize the set of symbols
+;;;    available for the :export and :extend options.
+;;;
+;;; Before we execute the :export and :extend options we check that their
+;;; symbol-name arguments are disjoint.
+;;;
+;;; 7. :export
+;;;
+;;;    The symbols being exported are also interned in the package.
+;;; 
+;;; 8. :extend
+;;;
+;;;    The :extend option is not implemented yet. This will probably be done by
+;;;
+;;;    8a. interning the provided list of symbol-names, and
+;;;    8b. calling a function from internal-structure to add package name and
+;;;        symbols to unresolved extensions.
+;;;
+;;; 9. :publish
+;;;
+;;;    The :publish option is not implemented yet. This will probably be done
+;;;    by calling an function from internal-structure that adds the named
+;;;    packages to unresolved publications.
+;;;
+;;; 10. :size
+;;; 11. :documentation
+;;;
+
+(declaim (ftype (function (list)
+                          (or list home-designator))
+                parse-home-option)
+
+         (ftype (function (home-designator package string)
                           (values))
-                check-defpackage-option))
+                execute-home-option))
 
-(defparameter *defpackage-option-names*
-  '(:local-nicknames :home :use :intern :shadow :export :import-from :shadowing-import-from :size))
+(defun parse-home-option (options)
+  ;; Returns nil, a string or the list '(home-package *package*).
+  ;; The value is evaluated and passed to resolve-home-designator.
+  (let ((arguments (concatenate-option-arguments :home options)))
+    (cond
+      ((cdr arguments)
+       ;; Zero or one home argument can be supplied.
+       (error 'program-error :message (format nil
+                                              "The :home option arguments~%  ~S~%~
+                                               exceeds the maximum of one (1) allowed."
+                                              arguments)))
+      ((null arguments)
+       ;; Any (:home) with no argument supplied goes here.
+       '(home-package *package*))
+      (t
+       ;; We have a :home option with exactly one argument supplied.
+       (when (first arguments)
+         (resolve-string-designator (first arguments)))))))
 
-(defun option-name (option)
-  (first option))
+(defun execute-home-option (home-package package name)
+  (cond
+    ((name package)
+     ;; name is non-nil for a pre-existing package.
+     ;;
+     ;; At this point the home-package may be the same or a new one: in
+     ;; either case we remove the package from its old home, and add it
+     ;; to the new one.
+     ;;
+     ;; This has the effect of placing it first in the interal-list of
+     ;; its home, which is where newly added packages are placed.
+     ;;
+     ;; Users may expect this even if home is unchanged.
+     (remove-package package (home-package package))
+     (add-package package home-package))
+    (t
+     ;; We're making a new package.
+     (setf (name package) name)
+     (add-package package home-package)))
+  (values))
 
-(defun named-option? (name option)
-  (eql name (option-name option)))
+(declaim (ftype (function (list)
+                          list)
+                parse-local-nicknames-option)
 
-(defun option-values (option)
-  (rest option))
+         (ftype (function (list package)
+                          (values))
+                execute-local-nicknames-option))
 
-(defun check-defpackage-option (option)
-  (unless (and (listp option)
-               ;; we don't use option-name because the result might not be a symbol.
-               (member (first option) *defpackage-option-names*))
-    (error 'type-error
-           :datum option
-           :expected-type 'defpackage-option
-           :context "while parsing defpackage options."))
+(defun parse-local-nicknames-option (options)
+  ;; Returns a list of (string string) lists.
+  (let ((option (concatenate-option-arguments :local-nicknames options)))
+    (handler-case
+        (mapcar #'(lambda (elt)
+                    (list (resolve-string-designator (first elt))
+                          (resolve-string-designator (second elt))))
+                option)
+      (type-error ()
+        (error 'program-error :message (format nil
+                                               "The :local-nicknames option arguments~%  ~S~%~
+                                                are not a list of~%  (string-designator string-designator)~%~
+                                               values."
+                                               option))))))
+
+(defun execute-local-nicknames-option (local-nicknames package)
+  (loop for local-nickname in local-nicknames
+        do (add-package-local-nickname (first local-nickname) (second local-nickname) package))
   (values))
 
 
-(declaim (ftype (function (common-lisp:symbol list)
-                          list)
-                mapcan-option))
+;;; Ensuring symbol-name Arguments are Disjoint
+;;; ===========================================
+;;;
+;;; The collection of symbol-name arguments given to the options :shadow,
+;;; :intern, :import-from, and :shadowing-import-from must all be disjoint;
+;;;
+;;; additionally, the symbol-name arguments given to :export and :intern must
+;;; be disjoint.
+;;;
+;;; Disjoint in this context is defined as no two of the symbol-names being
+;;; string= with each other.
+;;;
+;;; If either condition is violated, an error of type program-error should be
+;;; signaled.
+;;;
+;;; We should be more specific in out error report, list the exact symbols
+;;; that are duplicates, with the options they occure in:
+;;;
+;;; The symbol-name arguments
+;;;   (:shadow "abc" "def")
+;;;   (:import-from "abc" "def")
+;;; are not disjoint.
+;;;
+;;; But this is also lacking: our shadowing-import-from and import-from
+;;; options take an additional package argument, and there is one option for
+;;; each package.
+;;;
+;;; Do we want to include that information? Perhaps only the symbol names are
+;;; enough.
+;;;
+;;; There are duplicate symbol-name arguments for
+;;;   "abc" "def"
+;;; in
+;;;   :shadow and :import-from options.
+;;;
+;;; We will compare symbol-names using string=,
+;;; resolve-option-string-designator-arguments takes a list of designators and
+;;; returns a list of strings.
 
-(defun mapcan-option (name options)
-  ;; Extract and concatenate all values of the name option.
-  ;; For example
-  ;;
-  ;;   (… (:shadow #:a #:b #:c) … (:shadow #:e #:f) …)
-  ;;
-  ;; becomes
-  ;;   (:shadow #:a #:b #:c #:e #:f)
-  (mapcan #'(lambda (option)
-              (when (named-option? name option)
-                (option-values option)))
-          options))
-
-
-(declaim (ftype (function (common-lisp:symbol list)
-                          (values t boolean))
-                at-most-one-of)
-
-         (ftype (function (list)
-                          (values (or null string) boolean))
-                home-option)
-
-         (ftype (function (list)
+(declaim (ftype (function (&rest list)
                           boolean)
-                home-option?
-                size-option?)
+                disjoint-lists-of-symbols?)
 
-         (ftype (function (list)
-                          (values (or null integer) boolean))
-                size-option))
+         (ftype (function (list list list list)
+                          boolean)
+                disjoint-shadow/shadowing-import-from/import-from/intern-options?)
 
-(defun at-most-one-of (name options)
-  ;; Signals an error unless there is exactly one or zero name option
-  ;; values.
-  ;; Returns two values: the first is the option value (or nil if not
-  ;; present), the second is t if a value was present, and nil if not.
-  (let ((option (mapcan-option name options)))
-    (if (not (cdr option))
-        (values (first option) (not (null option)))
-        (error 'type-error
-	       :datum (cons name option)
-	       :expected-type (list name 'defpackage-option)
-	       :context (ecase name
-                          (:home "which allows exactly one string-designator value.")
-                          (:size "which allows exactly one integer value."))))))
+         (ftype (function (list list)
+                          boolean)
+                disjoint-intern/export-options?))
 
-(defun home-option (options)
-  ;; (:home string-designator), at most one
-  (multiple-value-bind (home present?)
-      (at-most-one-of :home options)
-    (values (when home (resolve-string-designator home))
-            present?)))
+(defun disjoint-lists-of-symbols? (&rest lists)
+  ;; False if any list shares elements (by cl:string=).
+  (let ((union '())
+        (sum 0))
+    (loop for list in lists
+          do (incf sum (length list))
+          do (setf union (union union list :test 'string=)))
+    (>= (length union) sum)))
 
-(defun home-option? (options)
-  (nth-value 1 (home-option options)))
-
-(defun size-option (options)
-  ;; (:size integer), at most one
-  (multiple-value-bind (size present?)
-      (at-most-one-of :size options)
-    (when present?
-      (unless (integerp size)
-        (error 'type-error
-               :datum (list :size size)
-               :expected-type (list :size 'defpackage-option)
-               :context "which allows exactly one integer value.")))
-    (values size present?)))
-
-(defun size-option? (options)
-  (nth-value 1 (size-option options)))
+(defun disjoint-shadow/shadowing-import-from/import-from/intern-options? (shadow shadowing-import-from import-from intern)
+  ;; Returns t or signals a program-error.
+  (or (disjoint-lists-of-symbols? shadow
+                                  (mapcan 'rest shadowing-import-from)
+                                  (mapcan 'rest import-from)
+                                  intern)
+      (error 'program-error :message (format nil
+                                             "The symbol-name arguments of ~%  :shadow ~S,~%  :shadowing-import-from ~S,~%  :import-from ~S,~%~
+                                              and~%  :intern ~S,~%~
+                                              are not disjoint."
+                                             shadow shadowing-import-from import-from intern))))
+             
+(defun disjoint-intern/export-options? (intern export)
+  ;; Returns t or signals a program-error.
+  (or (disjoint-lists-of-symbols? intern export)
+      (error 'program-error :message (format nil
+                                             "The symbol-name arguments of~%  :intern ~S,~%~
+                                              and~%  :export ~S,~%~
+                                              are not disjoint."
+                                             intern export))))
 
 
 (declaim (ftype (function (list)
                           list)
-                use-option intern-option shadow-option export-option))
+                parse-shadow-option))
 
-;;; The :use, :intern, :shadow, and, :export options are all lists of string
-;;; designators. More than one of each can appear. Separate occurences of each
-;;; can be concatenated into one list.
+(defun parse-shadow-option (options)
+  ;; Returns a list of strings
+  (mapcar 'resolve-string-designator (concatenate-option-arguments :shadow options)))
 
-(defun use-option (options)
-  ;; (:use string-designator…), zero or more
-  (map 'list 'resolve-string-designator (mapcan-option :use options)))
-
-(defun intern-option (options)
-  ;; (:intern string-designator…), zero or more
-  (map 'list 'resolve-string-designator (mapcan-option :intern options)))
-
-(defun shadow-option (options)
-  ;; (:shadow string-designator…), zero or more
-  (map 'list 'resolve-string-designator (mapcan-option :shadow options)))
-
-(defun export-option (options)
-  ;; (:export string-designator…), zero or more
-  (map 'list 'resolve-string-designator (mapcan-option :export options)))
-
-
-(declaim  (ftype (function (common-lisp:symbol list)
-                           list)
-                 any-import-from-option)
-          
-          (ftype (function (list)
-                           list)
-                 import-from-options shadowing-import-from-options))
-
-;;; The :import-from and :shadowing-import-from options are both lists of
-;;; string designators. The first designator names the package we are
-;;; importing from, remaining strings names the symbols. Separate occurences
-;;; of each are never concatenated (even if they name the same package).
-
-(defun any-import-from-option (name options)
-  (loop for option in options
-        when (eql name (first option))
-        collect (map 'list 'resolve-string-designator (rest option))))
-
-(defun import-from-options (options)
-  ;; (:import-from string-designator string-designator…), zero or more
-  (any-import-from-option :import-from options))
-
-(defun shadowing-import-from-options (options)
-  ;; (:shadowing-import-from string-designator string-designator…), zero or more
-  (any-import-from-option :shadowing-import-from options))
-
-(defmacro execute-import-option (function import-options importing-package)
-  (let ((from-package (common-lisp:gensym "IMPORT-FROM"))
-        (string (common-lisp:gensym "STRING"))
-        (strings (common-lisp:gensym "STRINGS"))
-        (symbol (common-lisp:gensym "SYMBOL"))
-        (status (common-lisp:gensym "STATUS")))
-    `(loop for ,strings in ,import-options
-           do (let ((,from-package (resolve-package-designator (first ,strings))))
-                (,function (loop for ,string in (rest ,strings)
-                                 collect (multiple-value-bind (,symbol ,status)
-                                             (find-symbol ,string ,from-package)
-                                           (if (null ,status)
-                                               (error 'symbol-is-not-accessible
-                                                      :symbol ,string
-                                                      :package ,from-package
-                                                      :context ,importing-package)
-                                               ,symbol)))
-                           ,importing-package)))))
+;;; There is no "execute-shadow-option", we call shadow from
+;;; expand-defpackage-form.
 
 (declaim (ftype (function (list)
                           list)
-                local-nicknames-options))
+                parse-shadowing-import-from-option))
 
-(defun local-nicknames-options (options)
-  ;; (:local-nicknames (string-designator string-designator)), zero or more
-  (loop for nicknames in (mapcan-option :local-nicknames options)
-        collect (if (= 2 (length nicknames))
-                    (list (resolve-string-designator (first nicknames))
-                          (resolve-string-designator (second nicknames)))
-                    (error 'type-error
-                           :datum nicknames
-                           :expected-type (list :local-nicknames 'defpackage-option)
-                           :context "which must be a list of two string designators."))))
+(defun parse-shadowing-import-from-option (options)
+  ;; Returns a list of lists of strings
+  (loop for option in (list-option-arguments :shadowing-import-from options)
+        collect (mapcar 'resolve-string-designator option)))
 
+;; :shadowing-import-from is executed by "execute-import-from".
+
+(declaim (ftype (function (list)
+                          list)
+                parse-use-option))
+
+(defun parse-use-option (options)
+  (mapcar 'resolve-string-designator (concatenate-option-arguments :use options)))
+
+;;; There is no "execute-use-option", we call use from expand-defpackage-form.
+
+(declaim (ftype (function (list)
+                          list)
+                parse-import-from-option)
+
+         (ftype (function ((or function common-lisp:symbol) list package)
+                          (values))
+                execute-import-option))
+
+(defun parse-import-from-option (options)
+  ;; Returns a list of lists of strings
+  (loop for option in (list-option-arguments :import-from options)
+        collect (mapcar 'resolve-string-designator option)))
+
+(defun execute-import-option (import-function list-of-arguments package)
+  ;; Executes both :shadowing-import-from and :import-from
+  (loop for arguments in list-of-arguments
+        do (funcall import-function
+                    (loop with from-package = (resolve-package-designator (first arguments))
+                          for symbol-name in (rest arguments)
+                          collect (multiple-value-bind (symbol status)
+                                      (find-symbol symbol-name from-package)
+                                    (if (null status)
+                                        (error 'symbol-is-not-accessible
+                                               :symbol symbol-name
+                                               :package from-package
+                                               :context package)
+                                        symbol)))
+                    package))
+  (values))
+            
+(declaim (ftype (function (list)
+                          list)
+                parse-intern-option)
+
+         (ftype (function (list package)
+                          (values))
+                execute-intern-option))
+
+(defun parse-intern-option (options)
+  (mapcar 'resolve-string-designator (concatenate-option-arguments :intern options)))
+
+(defun execute-intern-option (symbol-names package)
+  (loop for symbol-name in symbol-names
+        do (intern symbol-name package))
+  (values))
+            
+(declaim (ftype (function (list)
+                          list)
+                parse-export-option)
+
+         (ftype (function (list package)
+                          (values))
+                execute-export-option))
+
+(defun parse-export-option (options)
+  (mapcar 'resolve-string-designator (concatenate-option-arguments :export options)))
+
+(defun execute-export-option (symbol-names package)
+  (export (loop for symbol-name in symbol-names
+                collect (or (find-symbol symbol-name package)
+                            (intern symbol-name package)))
+          package)
+  (values))
+
+(defun parse-extend-option (options)
+  (declare (ignore options))
+  (error 'program-error :message "The option~% :extend~% is not implemented yet."))
+
+(defun parse-publish-option (options)
+  (declare (ignore options))
+  (error 'program-error :message "The option~% :publish~% is not implemented yet."))
+
+(defun parse-size-option (options)
+  (declare (ignore options))
+  (error 'program-error :message "The option~% :size~% is not implemented yet."))
+
+(defun parse-documentation-option (options)
+  (declare (ignore options))
+  (error 'program-error :message "The option~% :documentation~% is not implemented yet."))
+        
 
 (defun expand-defpackage-form (name options)
-  (let ((package (common-lisp:gensym "PACKAGE"))
-	(resolved-name (common-lisp:gensym "NEW-NAME"))
+  (let ((resolved-name (common-lisp:gensym "NAME"))
+        (package (common-lisp:gensym "PACKAGE"))
 	(home-package (common-lisp:gensym "HOME-PACKAGE"))
-        (nicknames (common-lisp:gensym "NICKNAMES"))
-	(string (common-lisp:gensym "STRING")))
+        ;;(local-nickname (common-lisp:gensym "LOCAL-NICKNAME"))
+        (shadow-args (common-lisp:gensym "SHADOW"))
+        (shadowing-import-from-args (common-lisp:gensym "SHADOWING-IMPORT-FROM"))
+        (import-from-args (common-lisp:gensym "IMPORT-FROM"))
+        (intern-args (common-lisp:gensym "INTERN"))
+        (export-args (common-lisp:gensym "EXPORT")))
     `(eval-when (:compile-toplevel :load-toplevel :execute)
-
-       (let* ((,resolved-name ,(resolve-string-designator name))
-              (,home-package (resolve-home-designator ,(if (home-option? options)
-                                                           (home-option options)        ; supplied, use the supplied value
-                                                           '(home-package *package*)))) ; not supplied, home of *package*
+       ;; We work out the location of the package being defined, and obtain a
+       ;; package object to work with.
+       ;;
+       ;; The package object may be an existing package or a new one.
+       ;;
+       ;; The process may terminate with an error if home cannot be
+       ;; resolved. This leaves the package hierarchy unchanged.
+       (let* ((,home-package (resolve-home-designator ,(parse-home-option options)))
+              (,resolved-name ,(resolve-string-designator name))
               (,package (or (find-conflicting-package ,resolved-name ,home-package)
                             (make-instance 'package))))
 
-         ;; We need to set the packages name, and place it in the hierarchy,
-         ;; in THAT order.
-         (cond
-           ((name ,package)
-            ;; We're working with a pre-existing package.
-            ;;
-            ;; CONSIDER: Should we ensure that it is the first package in it's
-            ;;           location? New packages are placed there, one might
-            ;;           expect defpackage to do the same even with a
-            ;;           pre-existing package.
-            (unless (eql ,home-package (home-package ,package))
-              ;; We assume the intent is to move the package because a new
-              ;; home was specified.
-              (remove-package ,package (home-package ,package))
-              (add-package ,package ,home-package)))
-           (t
-            ;; All is well, we're working with a new package. Assign it a name
-            ;; and a place in the hierarchy. The package is empty, and we know
-            ;; the name doesn't conflict with anything.
-            (setf (slot-value ,package 'name) ,resolved-name)
-            (add-package ,package ,home-package)))
+         ;; We place the package in its location.
+         ;;
+         ;; If we're working with a new package, and the name is invalid, then
+         ;; the process will terminate before any changes are made.
+         ;;
+         ;; Otherwise the package hierarchy is altered, with package placed.
+         (execute-home-option ,home-package ,package ,resolved-name)
 
-         ;; Next we resolve the local nicknames. We want the nicknames
-         ;; available for shadowing-import, use and import-from below.
-         (loop for ,nicknames in ',(local-nicknames-options options)
-               do (add-package-local-nickname (first ,nicknames)
-                                              (resolve-package-designator (second ,nicknames))
-                                              ,package))
-	 
-	 ;; The remaining options must be executed in the following order:
+         ;; We add local nicknames so they are available for use when
+         ;; processing further options.
+         ;;
+         ;; The process may terminate here depending on name conflicts. This
+         ;; may leave the package with some nicknames working.
+         (execute-local-nicknames-option ',(parse-local-nicknames-option options) ,package)
 
-	 ;; 1. :shadow and :shadowing-import-from.
-         (shadow ',(shadow-option options) ,package)
-         (execute-import-option shadowing-import ',(shadowing-import-from-options options) ,package)
-	 
-	 ;; 2. :use.
-         (use-package ',(use-option options) ,package)
+         ;; At this point the package being extended will execute its side of
+         ;; the :extend option
 
-	 ;; 3. :import-from and :intern.
-         (execute-import-option import ',(import-from-options options) ,package)
-         (loop for ,string in ',(intern-option options)
-               do (intern ,string ,package))
-         
-	 ;; 4. :export.
-         (export (loop for ,string in ',(export-option options)
-                       collect (or (find-symbol ,string ,package)
-                                   (intern ,string ,package)))
-                 ,package)
+         ;; At this point the package being published will execute its side of
+         ;; the :publish option.
 
-	 ;; We ignore :size and :documentation for now.
-	   
-	 ,package))))
-    
+         ;; The symbol-name lists are used twice below, for executing the
+         ;; options and checking that the lists are disjoint.
+         (let ((,shadow-args ',(parse-shadow-option options))
+               (,shadowing-import-from-args ',(parse-shadowing-import-from-option options))
+               (,import-from-args ',(parse-import-from-option options))
+               (,intern-args ',(parse-intern-option options))
+               (,export-args ',(parse-export-option options)))
 
-;; defpackage defined-package-name [[option]] => package
+           ;; The symbol-name arguments given to :shadow, :intern,
+           ;; :import-from, and :shadowing-import-from must all be
+           ;; disjoint. We signal a program-error if they are not.
+           (disjoint-shadow/shadowing-import-from/import-from/intern-options? ,shadow-args
+                                                                              ,shadowing-import-from-args
+                                                                              ,import-from-args
+                                                                              ,intern-args)
 
-;; option::= (:nicknames nickname*)* |  
-;;           (:documentation string) |  
-;;           (:use package-name*)* |  
-;;           (:shadow {symbol-name}*)* |  
-;;           (:shadowing-import-from package-name {symbol-name}*)* |  
-;;           (:import-from package-name {symbol-name}*)* |  
-;;           (:export {symbol-name}*)* |  
-;;           (:intern {symbol-name}*)* |  
-;;           (:size integer) 
+           (shadow ,shadow-args ,package) 
+           (execute-import-option 'shadowing-import ,shadowing-import-from-args ,package)
+           (use-package ',(parse-use-option options) ,package)
+           (execute-import-option 'import ,import-from-args ,package)
+
+           ;; The symbol-name arguments given to :export and :intern must be
+           ;; disjoint. We signal a program-error if they are not.
+           (disjoint-intern/export-options? ,intern-args ,export-args)
+
+           (execute-intern-option ,intern-args ,package)
+           (execute-export-option ,export-args ,package)
+
+           ;; The symbol-name arguments given to :export and :extend must be
+           ;; disjoint. We signal a program-error if they are not. Note that
+           ;; we can have multiple :extend options, and each of them must be
+           ;; disjoint with the :export option, but not with each other.
+           
+           ;; At this point we will execute the :extend option from the
+           ;; extending package.
+
+           ;; At this point we will execute the :publish option.
+
+           ;; At this point we will execute the :size option.
+
+           ;; At this point we will execute the :documentation option.
+           
+         ,package)))))
 
 (defmacro defpackage (name &rest options)
   "Syntax:
@@ -314,10 +563,19 @@ string—a string.
 package-name—a string designator.
 symbol-name—a string designator.
 
-\(:documentation string\)
+Note that options that are given as \(:name)\, for example \(:home\), are
+treated as if not supplied.
 
-    At most one :documentation option can appear. Its argument is a string
-    that is attached as the packages documentation string.
+\(:home package-name\)
+
+   Zero or exactly one :home options may appear. If present it must either
+   name a package or be nil. If a package is named, then that package will
+   become the new packages home package. If nil is given, then the new package
+   will become a top-level package.
+
+   If the :home option is not give, then the new package will become a peer
+   package of the current package; it is placed in the current packages home
+   package (or at the top-level).
 
 \(:use package-name*\)
 
@@ -344,6 +602,13 @@ symbol-name—a string designator.
     anything, it must be a package followed by zero or more symbols. The named
     symbols are imported from the named package as if by import.
 
+\(:intern symbol-name*\)
+
+    Zero or more :import options can appear, each naming zero or more
+    symbols. The named symbols are found or created in the new package. The
+    :intern option interacts with the :use option such that inherited symbols
+    can be used rather than new ones created.
+
 \(:export symbol-name*\)
 
     Zero or more :export options can appear, each naming zero or more
@@ -358,12 +623,16 @@ symbol-name—a string designator.
 
     The exported symbols are added to the new packages external symbols.
 
-\(:intern symbol-name*\)
+\(:extend package-name symbol-name*\)
 
-    Zero or more :import options can appear, each naming zero or more
-    symbols. The named symbols are found or created in the new package. The
-    :intern option interacts with the :use option such that inherited symbols
-    can be used rather than new ones created.
+\(publish package-name*\)
+
+\(:size\)
+
+\(:documentation string\)
+
+    At most one :documentation option can appear. Its argument is a string
+    that is attached as the packages documentation string.
 
 The order in which the options appear in a defpackage form is irrelevant. The
 order in which they are executed is as follows:
@@ -391,65 +660,13 @@ performed by this macro at load time must also be performed at compile time.
 
 Exceptional Situations:
 
-An error of type program-error should be signaled if :size or :documentation
-appears more than once.
+  program-error
 
-Since implementations might allow extended options an error of type
-program-error should be signaled if an option is present that is not actually
-supported in the host implementation.
+  An error of type program-error.
 
-The collection of symbol-name arguments given to the options :shadow, :intern,
-:import-from, and :shadowing-import-from must all be disjoint; additionally,
-the symbol-name arguments given to :export and :intern must be
-disjoint. Disjoint in this context is defined as no two of the symbol-names
-being string= with each other. If either condition is violated, an error of
-type program-error should be signaled.
+  Signaled if :size or :documentation appears more than once.
 
-For the :shadowing-import-from and :import-from options, a correctable error
-of type package-error is signaled if no symbol is accessible in the package
-named by package-name for one of the argument symbol-names.
-
-Name conflict errors are handled by the underlying calls to make-package,
-use-package, import, and export. See Section 11.1 (Package Concepts).
-
-See Also:
-
-documentation, Section 11.1 (Package Concepts), Section 3.2 (Compilation)
-
-Notes:
-
-The :intern option is useful if an :import-from or a :shadowing-import-from
-option in a subsequent call to defpackage (for some other package) expects to
-find these symbols accessible but not necessarily external.
-
-It is recommended that the entire package definition is put in a single place,
-and that all the package definitions of a program are in a single file. This
-file can be loaded before loading or compiling anything else that depends on
-those packages. Such a file can be read in the COMMON-LISP-USER package,
-avoiding any initial state issues.
-
-defpackage cannot be used to create two ``mutually recursive'' packages, such
-as:
-
- (defpackage my-package
-   (:use common-lisp your-package)    ;requires your-package to exist first
-   (:export \"MY-FUN\"))                
- (defpackage your-package
-   (:use common-lisp)
-   (:import-from my-package \"MY-FUN\") ;requires my-package to exist first
-   (:export \"MY-FUN\"))
-
-However, nothing prevents the user from using the package-affecting functions
-such as use-package, import, and export to establish such links after a more
-standard use of defpackage.
-
-The macroexpansion of defpackage could usefully canonicalize the names into
-strings, so that even if a source file has random symbols in the defpackage
-form, the compiled file would only contain strings.
-
-Frequently additional implementation-dependent options take the form of a
-keyword standing by itself as an abbreviation for a list (keyword T); this
-syntax should be properly reported as an unrecognized option in
-implementations that do not support it."
-  (mapc 'check-defpackage-option options)
-  (expand-defpackage-form name options))
+  Signaled if an option is present that is not actually supported in the
+  implementation."
+  (when (defpackage-options? options)
+    (expand-defpackage-form name options)))

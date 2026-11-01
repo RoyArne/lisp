@@ -79,6 +79,7 @@
                              (:file "use-package" :depends-on ("find-symbol" "shadow" "shadowing-import"))
                              (:file "make-package" :depends-on ("use-package" "delete-package"))
                              (:file "defpackage" :depends-on ("add-package-local-nickname"
+                                                              "find-symbol"
                                                               "intern" "shadow"
                                                               "shadowing-import" "import"
                                                               "export"
