@@ -563,100 +563,123 @@ string—a string.
 package-name—a string designator.
 symbol-name—a string designator.
 
-Note that options that are given as \(:name)\, for example \(:home\), are
-treated as if not supplied.
+Note that options that omitt arguments, for example \(:home\), are treated as
+if not supplied.
 
 \(:home package-name\)
 
-   Zero or exactly one :home options may appear. If present it must either
-   name a package or be nil. If a package is named, then that package will
-   become the new packages home package. If nil is given, then the new package
-   will become a top-level package.
+   At most one :home option may appear; it specifies where to locate the new
+   package.
 
-   If the :home option is not give, then the new package will become a peer
-   package of the current package; it is placed in the current packages home
-   package (or at the top-level).
+   If omitted, then the new package becomes a peer package of the current
+   package; i.e. the home package of the current package becomes the home
+   package of the new package.
 
-\(:use package-name*\)
+   If supplied as nil then the new package becomes a top-level package.
 
-    Zero or more :use options can appear, each naming zero or more
-    packages. The new package will inherit symbols from each named package as
-    if by use-package.
+   Otherwise, the named package becomes the new packages home package.
 
 \(:shadow symbol-name*\)
 
-    Zero or more :shadow options can appear, each naming zero or more
-    symbols. Each named symbol is created and added to the packages list of
-    shadowing symbols as if by shadow.
+    Any number of :shadow options may appear. The named symbols become
+    shadowing symbols in the new package by means of shadow.
 
 \(:shadowing-import-from package-name symbol-name*\)
 
-    Zero or more :shadowing-import-from options can appear. If the option
-    names anything, it must be a package followed by zero or more symbols. The
-    named symbols are imported from the named package as if by
-    shadowing-import.
+    Any number of :shadowing-import-from options may appear. The named symbols
+    become shadowing symbols in the new package by means of shadowing-import.
+
+\(:use package-name*\)
+
+    Any number of :use options may appear. The named packages are used by
+    means of use-package.
 
 \(:import-from package-name symbol-name*\)
 
-    Zero or more :import-from options can appear. If the option names
-    anything, it must be a package followed by zero or more symbols. The named
-    symbols are imported from the named package as if by import.
+    Any number of :import-from options may appear. The named symbols are
+    imported into the new package by means of import.
 
 \(:intern symbol-name*\)
 
-    Zero or more :import options can appear, each naming zero or more
-    symbols. The named symbols are found or created in the new package. The
-    :intern option interacts with the :use option such that inherited symbols
-    can be used rather than new ones created.
+    Any number of :intern options may appear. The named symbols become
+    internal symbols in the new package by means of intern.
 
 \(:export symbol-name*\)
 
-    Zero or more :export options can appear, each naming zero or more
-    symbols. Each named symbol is added to the packages list of external
-    symbols.
-
-    The :export option can interact with the :shadowing-import-from and
-    :import-from options such that imported symbols are used rather than new
-    symbols being created. If a named symbol is inherited (through the
-    :use-package option), the named symbol is imported and then exported from
-    the package being defined.
-
-    The exported symbols are added to the new packages external symbols.
+    Any number of :export options may appear. The named symbols become
+    external symbols in the new package by means of export. Any named symbols
+    that are not already present in the new package are interned.
 
 \(:extend package-name symbol-name*\)
 
+    The :extend option is mot implemented yet, and ignored.
+
 \(publish package-name*\)
 
+    The :publish option is mot implemented yet, and ignored.
+
 \(:size\)
+    The :size option is mot implemented yet, and ignored.
 
 \(:documentation string\)
 
-    At most one :documentation option can appear. Its argument is a string
-    that is attached as the packages documentation string.
+    The :documentation option is mot implemented yet, and ignored.
 
 The order in which the options appear in a defpackage form is irrelevant. The
 order in which they are executed is as follows:
 
 1. :home.
-2. :local-nicknames
+2. :local-nicknames.
 3. :shadow and :shadowing-import-from.
 4. :use.
-5. :import-from and :intern.
-6. :export.
+5. :import-from.
+6. :intern.
+7. :export.
+8. :extend.
+9. :publish
 
-The new package is placed in its home first, because that establishes which
-packages are accessible to the :local-nicknames option. Local nicknames are
-next since they may be referenced by the :shadowing-import-from, :import-from,
-and :use options.
+1. The new package is placed in its home location to establish wich packages
+   are visible when other options are executed.
 
-We execute :shadow and :shadowing-import-from next because they might be
-necessary to block name conflicts from the :use option. Following shadows we
-execute the :use option, so that :intern and :export can refer to inherited
-symbols. We then execute the :intern option and lastly the :export option so
-that it can refer to symbols made accessible by the other options.
+2. We define local nicknames so they may be used by later options.
 
-If a defpackage form appears as a top level form, all of the actions normally
-performed by this macro at load time must also be performed at compile time.
+3. We execute :shadow and :shadowing-import to block any name conflicts that
+   may appear because of later options.
+
+4. We establish inherited symbols so they are available for :intern later.
+
+5. We execute :import-from so that imported symbols are available for :intern.
+
+6. We execute :intern which may intern symbols available from :use and
+   :import-from.
+
+7. :export is executed after all symbols are available.
+
+8. :extend is not implemented. Each :extend option names a package and a list
+   of symbols that package will import. The names should be disjoint from
+   :export arguments.
+
+Clarification Needed:
+The Common Lisp HyperSpec entry for defpackage says:
+
+  The collection of symbol-name arguments given to the options :shadow,
+  :intern, :import-from, and :shadowing-import-from must all be disjoint;
+  additionally, the symbol-name arguments given to :export and :intern must be
+  disjoint. Disjoint in this context is defined as no two of the symbol-names
+  being string= with each other. If either condition is violated, an error of
+  type program-error should be signaled.
+
+However, the execution order implies that it is fine if the symbol names are
+not disjoint. It makes sense that
+
+  a. :shadow and :shadowing-import-from should be disjoint.
+  b. :import-from should be disjoint from :shadow and :shadowing-import.
+
+Using :intern with any name from the options above will not change anything.
+
+It is also mentioned that arguments to :intern and :export should be disjoint.
+The :export option interns any named symbol it cannot find, so it is redundant
+to add those names to :intern, but it does not cause problems.
 
 Exceptional Situations:
 
