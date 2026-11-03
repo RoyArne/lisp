@@ -112,7 +112,8 @@
 
 (defun add-shadowing-symbol (name package)
   (let ((symbol (symbol-to-add name package)))
-    (pushnew symbol (slot-value package 'shadowing-symbols))
+    (with-slots (shadowing-symbols) package
+      (setf shadowing-symbols (cons symbol (remove (name symbol) shadowing-symbols :key #'name :test #'string=))))
     symbol))
 
 
