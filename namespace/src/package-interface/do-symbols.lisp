@@ -27,8 +27,8 @@ An implicit block named nil surronds the entire do-symbols. return or
 return-from may be used to end the iteration prematurely.
 
 var is bound to nil when result-form is evaluated."
-  (let ((function-name (common-lisp:gensym "DO-ALL-SYMBOLS-BODY"))
-        (package-variable (common-lisp:gensym "DO-ALL-SYMBOLS-PACKAGE")))
+  (let ((function-name (common-lisp:gensym "DO-SYMBOLS-BODY"))
+        (package-variable (common-lisp:gensym "DO-SYMBOLS-PACKAGE")))
     ;; separate-declarations-and-body is defined in src/utilities.lisp.
     (multiple-value-bind (declarations body-forms)
         (separate-declarations-and-body body)
@@ -46,4 +46,5 @@ var is bound to nil when result-form is evaluated."
                         (unless (shadowing-symbol? symbol ,package-variable)
                           (,function-name symbol))))))
          (let ((,var nil))
+           ,var
            ,result-form)))))
