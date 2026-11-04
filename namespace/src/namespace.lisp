@@ -206,7 +206,7 @@
            #:package-does-not-exist           ; Condition Type (implemented)
            #:package-error-conflicting-name   ; Function (implemented)
            #:package-error-conflicting-symbol ; Function (implemented)
-           #:package-error-context            ; Function (implemented)
+           #:package-error-location           ; Function (implemented)
            #:package-error-message            ; Function (implemented)
            #:package-error-symbol             ; Function (implemented)
            #:package-is-a-system-package      ; Condition Type (implemented)

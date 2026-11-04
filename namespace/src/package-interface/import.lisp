@@ -105,7 +105,7 @@ the conflict is with a shadowing symbol of the package.")
 	   (restart-case
 	       (error 'conflicting-symbol-names
 		      :package package
-		      :context *package*
+		      :location *package*
 		      :symbol new-symbol
 		      :conflicting-symbol conflicting-symbol)
 	     (abort ()
@@ -126,7 +126,7 @@ the conflict is with a shadowing symbol of the package.")
 	   (restart-case 
 	       (error 'conflicting-symbol-names
 		      :package package
-		      :context *package*
+		      :location *package*
 		      :symbol new-symbol
 		      :conflicting-symbol conflicting-symbol)
 	     ;; If the conflicting symbol is :internal or

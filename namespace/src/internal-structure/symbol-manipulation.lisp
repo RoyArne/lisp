@@ -26,7 +26,7 @@
                 find-shadowing-symbol)
 
          (ftype (function (string package)
-                          (values (or null symbol) (or null common-lisp:keyword)))
+                          (values (or null symbol) (or null common-lisp:keyword))) ; FIXME: will have to be just keyword eventually.
                 find-present-symbol))
 
 (defun find-symbol-in-table (name table)

@@ -66,7 +66,7 @@ conflicting-symbol-names
 	  (restart-case
 	      (error 'symbol-is-not-accessible
 		     :package package
-		     :context *package*
+		     :location *package*
 		     :symbol symbol)
             ;; FIXME: Import may signal a correctable error of type
             ;;        conflicting-symbol-names. Correcting may fuck our
@@ -123,7 +123,7 @@ conflicting-symbol-names
 	         (restart-case
 		     (error 'conflicting-symbol-names
 			    :package package
-			    :context *package*
+			    :location *package*
 			    :symbol symbol
 			    :conflicting-symbol conflicting-symbol)
 		   (unintern ()

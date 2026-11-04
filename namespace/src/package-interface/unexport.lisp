@@ -51,7 +51,7 @@ symbol-is-not-accessible
 	(restart-case
 	    (error 'symbol-is-not-accessible
 		   :package package
-		   :context *package*
+		   :location *package*
 		   :symbol symbol)
 	  (import ()
 	    :report (lambda (stream)

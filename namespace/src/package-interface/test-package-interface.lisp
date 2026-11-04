@@ -187,7 +187,7 @@
 (test package-package-returns-a-string
   (with-packages (p1)
     (is (typep (ns:package-name p1) 'string:string))
-    (is (string:string= (string:string "p1") (ns:package-name p1)))))
+    (is (string:string= "p1" (ns:package-name p1)))))
 
 
 ;;; PACKAGE?
@@ -222,7 +222,7 @@
         (ns:intern "s1")
       (is-true (typep s1 'ns:symbol))
       (is-false s1-status)
-      (is (string:string= (string:string "s1") (ns:symbol-name s1)))
+      (is (string:string= "s1" (ns:symbol-name s1)))
       (is (eql p1 (ns:symbol-package s1)))
       (multiple-value-bind (f1 f1-status)
           (ns:intern "s1")

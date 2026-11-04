@@ -46,47 +46,48 @@
 
 ;;; Getting the Home Package
 
-(declaim (ftype (function (context-designator)
-                          context-designator)
+(declaim (ftype (function (location-designator)
+                          location-designator)
                 home-package))
 
-(defun home-package (context-designator)
-  "Returns the home package of PACKAGE. Returns NIL for top-level packages."
-  (etypecase context-designator
+(defun home-package (location)
+  "Return the home package of PACKAGE. Return NIL for top-level packages."
+  (etypecase location
     (null nil)
-    (package (first (internal-to-list context-designator)))))
+    (package (first (internal-to-list location)))))
 
 
 ;;; Searching for Packages
 
-(declaim (ftype (function (context-designator)
+(declaim (ftype (function (location-designator)
                           list)
                 visible-list)
 
          (ftype (function (string package)
-                          (or null package))
+                          location-designator)
                 find-visible-package)
 
          (ftype (function (package)
                           list)
                 list-hierarchy))
 
-(defun visible-list (context-designator)
-  "Returns the list of packages returned by list-all-packages."
-  (etypecase context-designator
+(defun visible-list (location)
+  "Returns a list of all packages that are visible from the given location."
+  (etypecase location
     (null *packages*)
-    (package (append (internal-list context-designator)
-                     (visible-list (home-package context-designator))))))
+    (package (append (internal-list location)
+                     (visible-list (home-package location))))))
 
 (defun find-visible-package (name package)
-  "Searches for a package named name in the local nicknames and visible list of
-package. Local nicknames take precedence."
+  "Attempts to locate a visible package named name. It checks the local nicknames
+of package first, then looks in the visible-list using package as the
+location."
   (or (rest (find-local-nickname name package))
       (find name (visible-list package) :test 'string= :key 'name)))
 
 (defun list-hierarchy (package)
   "Return a list of packages (including package itself) that are internal to
-package by means ofa right-to-left pre-order traversal."
+package by means of a left-to-right pre-order traversal."
   (cons package (mapcan 'list-hierarchy (internal-list package))))
 
 
@@ -96,11 +97,11 @@ package by means ofa right-to-left pre-order traversal."
                           list)
                 peer-list)
 
-         (ftype (function (context-designator)
+         (ftype (function (location-designator)
                           list)
                 conflict-list)
 
-         (ftype (function (string context-designator)
+         (ftype (function (string location-designator)
                           (or null package))
                 find-conflicting-package))
 
@@ -111,22 +112,21 @@ package by means ofa right-to-left pre-order traversal."
       (null *packages*)
       (package (internal-list home)))))
 
-(defun conflict-list (context-designator)
-  "Returns a list of packages that must be checked for name conflicts when naming
-a package whos home package is CONTEXT-DESIGNATOR."
-  (etypecase context-designator
+(defun conflict-list (location-designator)
+  "Return a list of packages that must be checked for name conflicts when naming
+a package located at location-designator."
+  (etypecase location-designator
     (null *packages*)
-    (package (append (peer-list context-designator)
-                     (internal-to-list context-designator)))))
+    (package (append (peer-list location-designator)
+                     (internal-to-list location-designator)))))
 
-(defun find-conflicting-package (name context-designator)
-  "Return a package that would cause a name conflict if a new package named NAME
-was created with PACKAGE as its home package. Returns NIL if there is no such
-package."
+(defun find-conflicting-package (name location-designator)
+  "Look for a package which would conflict with a package named name located as a
+peer package at location-designator."
   ;; CONSIDER: Since we always check for name conflicts when creating,
   ;;           renaming, and, moving packages, there should never be more than
   ;;           one conflict, right?
-  (find name (conflict-list (home-package context-designator)) :test 'string= :key 'name))
+  (find name (conflict-list (home-package location-designator)) :test 'string= :key 'name))
 
 
 ;;; Adding and Removing top-level packages.
@@ -178,7 +178,7 @@ package."
 
 ;;; Adding and Removing Packages
 
-(declaim (ftype (function (package context-designator)
+(declaim (ftype (function (package location-designator)
                           package)
                 remove-package
                 add-package))

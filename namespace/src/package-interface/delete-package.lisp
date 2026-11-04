@@ -90,8 +90,8 @@ package-is-in-use
          (restart-case
 	     (error 'package-is-the-current-package
 		    :package package
-		    :context *package*
-		    :message "Cannot delete ~S because it (or one of its internal packages) is the current package in context ~S.")
+		    :location *package*
+		    :message "Cannot delete ~S because it (or one of its internal packages) is the current package located at ~S.")
 	   (continue ()
 	     :report (lambda (stream)
 		       (format stream "Return NIL without deleting ~S."  package))
@@ -114,7 +114,7 @@ package-is-in-use
          (restart-case
 	     (error 'package-is-a-system-package
 		    :package package
-		    :context *package*
+		    :location *package*
 		    :message "Cannot delete ~S because it is a system package.")
 	   (continue ()
 	     :report (lambda (stream)
@@ -132,7 +132,7 @@ package-is-in-use
                      do (restart-case
                             (error 'package-is-in-use
                                    :package package
-                                   :context package-to-unuse
+                                   :location package-to-unuse
                                    :message (format nil "Cannot delete ~~S because ~S is using ~~S." used-by))
                           (unuse-package ()
                             :report (lambda (stream)

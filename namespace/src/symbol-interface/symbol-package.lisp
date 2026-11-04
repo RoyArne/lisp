@@ -3,18 +3,16 @@
 (in-package #:namespace)
 
 (defgeneric symbol-package (symbol)
-
   (:documentation
    "Syntax:
-\(symbol-package symbol\) → context-designator
+\(symbol-package symbol\) → location-designator
 
 Arguments and Values:
 symbol—a symbol object.
-context-designator—a package object, or nil.
+location-designator—a package object, or nil.
 
 Description:
-Returns the home package of symbol, or nil if symbol is not interned
-in any package.")
-
+Returns the home package of symbol, or nil if symbol is not interned in any
+package.")
   (:method ((symbol symbol))
     (package symbol)))

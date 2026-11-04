@@ -12,15 +12,9 @@ package—a package designator.
 symbols—a list of symbols.
 
 Description:
-Returns a list of symbols that have been declared as shadowing symbols
-in package by shadow or shadowing-import (or the equivalent defpackage
-options). All symbols on this list are present in package.
-
-Exceptional Situations:
-Signals an error of type type-error if package is not a package
-designator.
-Signals an error of type package-does-not-exist if package cannot be
-found in context.")
+Returns a list of symbols that have been declared as shadowing symbols in
+package by shadow or shadowing-import (or the equivalent defpackage
+options). All symbols on this list are present in package.")
 
   (:method (package)
     (package-shadowing-symbols (resolve-package-designator package *package*)))

@@ -16,25 +16,28 @@
                 :depends-on ("namespace")
                 :components ((:file "package")
                              (:file "symbol")))
-
-               (:module conditions
-                :serial t
-                :depends-on ("namespace")
-                :components ((:file "package-error")))
                
                (:module internal-structure
                 :serial t
-                :depends-on ("namespace" classes conditions)
+                :depends-on ("namespace" classes)
                 :components ((:file "designator-types")
                              (:file "name-validation")
                              (:file "initial-packages-and-locations")
-                             (:file "package-manipulation") ; :depends-on ("designator-types")
-                             (:file "resolve-string-designator")  ; :depends-on ("designator-types")
-                             (:file "resolve-package-designator")  ; :depends-on ("designator-types")
-                             (:file "resolve-context-designator") ; :depends-on ("designator-types")
-                             (:file "resolve-home-designator") ; :depends-on ("designator-types")
+                             (:file "package-manipulation" :depends-on ("designator-types"))
                              (:file "symbol-manipulation")))
 
+               (:module conditions
+                :serial t
+                :depends-on ("namespace" internal-structure)
+                :components ((:file "package-error")))
+
+               (:module designator-resolution
+                :serial t
+                :depends-on ("namespace" internal-structure conditions)
+                :components ((:file "resolve-string-designator")
+                             (:file "resolve-package-designator")
+                             (:file "resolve-home-designator")))
+               
                (:module symbol-interface
                 :serial t
                 :depends-on ("namespace" classes)
@@ -45,7 +48,7 @@
                              (:file "symbol-package")))
 
                (:module package-interface
-                :depends-on ("namespace" "utilities" classes conditions internal-structure symbol-interface)
+                :depends-on ("namespace" "utilities" classes internal-structure conditions designator-resolution symbol-interface)
                 :components ((:file "add-package-local-nickname")
                              (:file "do-all-symbols")
                              (:file "do-symbols")

@@ -10,7 +10,7 @@
 Arguments and Values:
 name—a string designator.
 use—a list of package designators. The default is an empty list.
-home—a context designator. The default is nil.
+home—a location designator. The default is nil.
 new-package—a package object.
 
 Description:
@@ -76,7 +76,7 @@ conflicting-package-names
                                      (restart-case
                                          (error 'conflicting-package-names
 		                                :package conflict
-		                                :context home-package
+		                                :location home-package
 		                                :name name)
 	                               (delete-package ()
 	                                 :report (lambda (stream)

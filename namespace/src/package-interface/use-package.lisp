@@ -57,7 +57,7 @@ conflicting-symbol-names
 		     (restart-case
 		         (error 'conflicting-symbol-names
 			        :package package
-			        :context *package*
+			        :location *package*
 			        :symbol new-symbol
 			        :conflicting-symbol conflicting-symbol)
 		       (keep-old ()

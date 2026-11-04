@@ -4,7 +4,7 @@
 ;;;;
 ;;;;    package-error
 ;;;;      package-error-package
-;;;;      package-error-context
+;;;;      package-error-location
 ;;;;      package-error-message
 ;;;;
 ;;;; 2. Packages that are Used For Something
@@ -44,7 +44,7 @@
 ;;;
 ;;;    package-error
 ;;;      package-error-package
-;;;      package-error-context
+;;;      package-error-location
 ;;;      package-error-message
 ;;;
 ;;; ============================================================================
@@ -58,18 +58,18 @@ condition—a condition of type package-error.
 package—a package designator.
 
 Description:
-Returns a package designator for the offending package."))
+Return a package designator for the offending package."))
 
-(defgeneric package-error-context (condition)
+(defgeneric package-error-location (condition)
   (:documentation "Syntax:
-\(package-error-context condition\) → context
+\(package-error-location condition\) → location
 
 Arguments and Values:
 condition—a condition of type package-error.
-context—a context designator.
+location—a location designator.
 
 Description:
-Returns the context designator of the offending package."))
+Return the location designator for the offending package."))
 
 (defgeneric package-error-message (condition)
   (:documentation "Syntax:
@@ -86,37 +86,37 @@ strings and parameters are listed below.
 Methods:
 \(package-error-message package-error\) → string
 
-  \"Error operating on ~S in the context ~S.\"
-  package and context.
+  \"Error operating on ~S located at ~S.\"
+  package and location.
 
 \(package-error-message conflicting-package-names\) → string
 
-  \"The name ~S conflicts with ~S in the context ~S.\"
-  name, package and context.
+  \"The name ~S conflicts with ~S located at ~S.\"
+  name, package and location.
 
 \(package-error-message package-symbol-error\) → string
 
-  \"Error operating on ~S in the package ~S in the context ~S.\"
-  symbol, package and context.
+  \"Error operating on ~S in the package ~S located at ~S.\"
+  symbol, package and location.
 
 \(package-error-message conflicting-symbol-names\) → string
 
-  \"The symbol name ~S conflicts with ~S in ~S in the context of ~S.\"
-  conflicting-symbol, symbol, package and context."))
+  \"The symbol name ~S conflicts with ~S in ~S located at ~S.\"
+  conflicting-symbol, symbol, package and location."))
 
 (define-condition package-error (error)
   ((package :reader package-error-package
-	    :initform "DEFAULT VALUE"
+	    :initform "PACKAGE-DESIGNATOR"
 	    :initarg :package
 	    :type package-designator
-	    :documentation "The package designator of the offending package.")
-   (context :reader package-error-context
-	    :initform nil
-	    :initarg :context
-	    :type context-designator
-	    :documentation "The context designator of the offending package.")
+	    :documentation "The package designator for the offending package.")
+   (location :reader package-error-location
+	     :initform nil
+	     :initarg :location
+	     :type location-designator
+	     :documentation "The location designator for the offending package.")
    (message :reader package-error-message
-	    :initform "Error operating on ~S in the context ~S."
+	    :initform "Error operating on ~S located at ~S."
 	    :initarg :message
 	    :type string
 	    :documentation "A format string used to report this condition."))
@@ -124,7 +124,7 @@ Methods:
 	     (format stream
 		     (package-error-message c)
 		     (package-error-package c)
-		     (package-error-context c))))
+		     (package-error-location c))))
   (:documentation
    "Signaled when a package operation cannot be performed."))
 
@@ -148,13 +148,13 @@ system package."))
   ()
   (:documentation
    "Signaled by delete-package when the package being deleted is the
-current package."))
+current package, *package*."))
 
 (define-condition package-is-in-use (package-error)
   ()
   (:documentation
    "Signaled by delete-package when the package being deleted is used
-by another package."))
+by another package \(used by means of use-package\)."))
 
 
 ;;; ============================================================================
@@ -167,21 +167,10 @@ by another package."))
 (define-condition package-does-not-exist (package-error)
   ()
   (:default-initargs
-   :message "The name ~S does not designate any package in the context ~S.")
+   :message "The name ~S does not designate any package located at ~S.")
   (:documentation
    "Signaled when a string designator cannot be resolved into a
-package object by resolve-package-designator.
-
-Every function that accepts a package designator (and context
-designator) argument calls resolve-package-designator, and may signal
-a package-does-not-exist error. The functions are:
-
-  add-package-local-nickname, delete-package, in-package,
-  package-internal-list, package-locally-nicknamed-by-list,
-  package-local-nicknames, package-name, package-nicknames,
-  package-package, package-shadowing-symbols, package-used-by-list,
-  remove-package-local-nickname, rename-package, and
-  resolve-home-designator."))
+package object by resolve-package-designator."))
 
 
 ;;; ============================================================================
@@ -209,13 +198,13 @@ Returns the conflicting name."))
 	 :initarg :name
 	 :documentation "A string."))
   (:default-initargs
-   :message  "The name ~S conflicts with ~S in the context ~S.")
+   :message  "The name ~S conflicts with ~S located at ~S.")
   (:report (lambda (c stream)
 	     (format stream
 		     (package-error-message c)
 		     (package-error-conflicting-name c)
 		     (package-error-package c)
-		     (package-error-context c))))
+		     (package-error-location c))))
   (:documentation
    "Signaled when the given name \(or nickname\) of a package conflicts
 with the name \(or nickname\) of another package."))
@@ -246,13 +235,13 @@ Returns the offending symbol."))
 	   :initarg :symbol
 	   :documentation "A symbol."))
   (:default-initargs
-   :message "Error operating on ~S in the package ~S in the context ~S.")
+   :message "Error operating on ~S in the package ~S located at ~S.")
   (:report (lambda (c stream)
 	     (format stream
 		     (package-error-message c)
 		     (package-error-symbol c)
 		     (package-error-package c)
-		     (package-error-context c))))
+		     (package-error-location c))))
   (:documentation
    "Signaled when a package operation involving a symbol cannot be
 performed."))
@@ -268,7 +257,7 @@ performed."))
 (define-condition symbol-is-not-accessible (package-symbol-error)
   ()
   (:default-initargs
-   :message "The symbol ~S is not accessible from ~S in the context ~S.")
+   :message "The symbol ~S is not accessible from ~S located at ~S.")
   (:documentation
    "Signaled when a package operation is attempted on a symbol that is
 not accessible."))
@@ -299,14 +288,14 @@ Returns the symbol that conflicts with the offending symbol."))
 		       :initarg :conflicting-symbol
 		       :documentation "A symbol"))
   (:default-initargs
-   :message "The symbol name ~S conflicts with ~S in ~S in the context of ~S.")
+   :message "The symbol name ~S conflicts with ~S in ~S located at ~S.")
   (:report (lambda (c stream)
 	     (format stream
 		     (package-error-message c)
 		     (package-error-symbol c)
 		     (package-error-conflicting-symbol c)
 		     (package-error-package c)
-		     (package-error-context c))))
+		     (package-error-location c))))
   (:documentation
    "Signaled when a package operation would result in two accessible
 symbols with the same name."))

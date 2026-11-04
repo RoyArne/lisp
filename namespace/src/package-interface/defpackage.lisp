@@ -400,7 +400,7 @@
                                         (error 'symbol-is-not-accessible
                                                :symbol symbol-name
                                                :package from-package
-                                               :context package)
+                                               :location package)
                                         symbol)))
                     package))
   (values))

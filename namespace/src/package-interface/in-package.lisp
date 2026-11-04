@@ -23,4 +23,4 @@ package does not exist."
      (setf *package* (or (find-visible-package (resolve-string-designator ',name) *package*)
                          (error 'package-does-not-exist
 	                        :package ',name
-	                        :context *package*)))))
+	                        :location *package*)))))

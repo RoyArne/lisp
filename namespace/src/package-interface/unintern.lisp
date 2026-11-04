@@ -69,14 +69,14 @@ unintern returns true if it removes symbol, and nil otherwise.")
 		    do (if (and external-symbol conflicting-symbol)
 			   (error 'conflicting-symbol-names
 			          :package package
-			          :context *package*
+			          :location *package*
 			          :symbol symbol
 			          :conflicting-symbol conflicting-symbol
                                   :message (format nil "Cannot unintern the shadowing symbol~~%  ~~S~~%~
                                                         because it causes conflict between~~%  ~S~~%~
                                                         and~~%  ~~S,~~%~
                                                         both external symbols used by~~%  ~~S~~%~
-                                                        in the context~~%  ~~S."
+                                                        located at~~%  ~~S."
 						   external-symbol))
 			   (setf conflicting-symbol external-symbol))))
             ;; All clear, do the removing and set symbol's home package to nil.

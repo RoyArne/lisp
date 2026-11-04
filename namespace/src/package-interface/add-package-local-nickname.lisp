@@ -14,7 +14,7 @@
          ;; the package that is adding the nicknamed package.
          (error 'conflicting-package-names
 		:package package
-		:context package
+		:location package
 		:name nickname
 		:message "~S names ~S when adding a local nickname to ~S."))
         ((find-local-nickname nickname package)
@@ -26,7 +26,7 @@
          ;;           add an extra entry for the same package.
 	 (error 'conflicting-package-names
 		:package (rest (find-local-nickname nickname package))
-		:context package
+		:location package
 		:name nickname
 		:message "~S is already a local nickname for ~S in ~S."))
         (t

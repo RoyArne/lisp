@@ -38,7 +38,7 @@ conflicting-package-names
                                  (restart-case
                                      (error 'conflicting-package-names
 		                            :package conflict
-		                            :context package
+		                            :location package
 		                            :name new-name)
 	                           (delete-package ()
 	                             :report (lambda (stream)
