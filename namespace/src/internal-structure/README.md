@@ -1,35 +1,48 @@
+
 # Internal Structure
 
-The internal-structure module is used to intersect classes and
-conditions with the public facing interfaces in package-interface and
-symbol-interface:
+The _internal-structure_ module serves as a layer between the
+_classes_ and _package-interface_/_symbol-interface_ modules.
 
-- package-interface and symbol-interface defines what can be done,
-- internal structure provides methods to do it.
+The public interface employs the _internal-structure_ module to locate
+and place packages and symbols. It is also responsible for maintaining
+system integrity and signaling errors: **_internal-structure_ executes
+operations without checking for errors**.
+
 
 ## Designator Types
 
-We define a few types to be used in place of names and package
-objects.
+We define a few types to be used in place of locations, names and
+**package** objects.
 
-- string-designator—these are symbols or strings, to be used where a
-  name is expected.
+- **location-designator**—**package** objects or **nil**. There is no
+    resolve-location-designator function: the location **nil** means
+    the top-level, and a **package** object means that **package**.
 
-- package-designator—these are string-designators, or package
-  objects. They can be used where a package is expected.
+- **string-designator**—**symbol** or **string** objects. They are
+    used as names and resolve into **string** objects.
 
-- home-designators—a few function calls require a home package. These
-  are either nil (meaning a top-level package), or a package object.
+- **package-designator**—either a **string-designator** naming a
+  **package** object , or a **package** object. They resolve into
+  **package** objects.
 
-- context-designators—these are used when a function needs to work
-  from a place in the package hierarchy. Usually this defaults to
-  \*package\*, and some functions like **list-all-packages* does this
-  implicitly.
+- **home-designator**—either a **package-designator** or **nil**. They
+  resolve into **package** objects or **nil**.
 
-For each designator there is a function, resolve-X-designator, which
-returns the designated value. Note that failed designator resolution
-may signal an error of type package-error, check the individual
-resolutors.
+Of the designators, only the **location- designator** is used in the
+_internal-structure_ module. The rest are used in higher level
+interfaces.
+
+
+## Name Validation
+
+Here we define writer functions for the **name** slots of **package**
+and **symbol** classes.
+
+The functions are intended to validate names, but this is not
+implemented yet. For now they simply write the given strings into the
+**name** slots.
+
 
 ## Initial Packages and Locations
 
@@ -40,6 +53,7 @@ We define a few variables to store and help navigate the package hierarchy:
 - \*user\*—the initial current package. empty, uses \*lisp\* and \*keyword\*.
 - \*package\*—the current package.
 - \*packages\*—the list of top-level packages.
+
 
 ### \*lisp\*
 
@@ -77,6 +91,7 @@ our existing variables, but this is neither flexible nor robust:
   locks (not easily anyway, they'd have to wrap the package interface
   inside their own interface).
 
+
 ### \*keyword\*
 
 This is a system package. It shares the issues with the \*lisp\*
@@ -98,12 +113,14 @@ this?
 The above is a known pattern that could be used on \*keyword\*. It
 does lock us out of using the system keyword package.
 
+
 ### \*user\*
 
 This is not a system package, but maybe a "dwarf" system package? We
 probably want this available, undeletable, but users must otherwise be
 free to manipulate it. Which implies we need different levels of
 locking.
+
 
 ### \*lisp\*, \*keyword\*, \*user\*, and \*packages\*.
 
@@ -162,7 +179,6 @@ The file "package-manipulation.lisp" implements functions for
 - adding and removing packages from the hierarchy, and
 - manipulating the package use and used by lists.
 
-
 No error checking is performed in the above operations: the package
 interface is responsible for that.
 
@@ -188,6 +204,3 @@ Better type checking for \*packages\*, \*lisp\* and \*keyword\* is required:
 
 However, type definitions are not implemented yet, and they don't
 belong in the namespace system.
-
-Name validation likely goes in this module, it is manipulation of the
-name slots in symbols and packages.

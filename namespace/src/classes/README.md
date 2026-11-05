@@ -101,6 +101,7 @@ have to be external in order to be imported.
 - Being present in this list means that the symbol takes precedence in
   a potential name conflict.
 
+
 ## Publishing and Extending Packages
 
 Our hierarchy prevents access to internal packages of other
@@ -132,6 +133,7 @@ devise a method that
 Internal packages cannot be created (by **defpackage** or
 **make-package**) before their home package exists. This means we will
 need forward references (we will use names), but more on that later.
+
 
 ### Publishing Packages
 
@@ -188,7 +190,68 @@ slots added to the package class:
 - we will also add a list of unresolved references, maybe
   **unresolved-publications**?
 
+
 ### Extending Packages
+
+We will implement this by adding a defpackage option, **:extend**, and a
+function in package-interface:
+
+- (**extend** symbol-list package-to-extend &optional extending-package) → t
+
+Do we also add
+
+- (**unextend** package-to-unextend &optional unextending-package) → t
+
+in order to mirror **export** and **unexport**?
+
+We will probably dedicate three slots for :extend:
+
+1. **unresolved-extensions**
+
+   An a-list, (package-name . symbol-list).
+
+2. **resolved-extensions**
+
+   An a-list (package-object . symbol-list)
+ 
+3. **extended-by**
+
+   A list of package-objects.
+
+We add the following functions to manipulate the slots to the
+**internal-structure** module:
+
+- (**find-resolved-extension** name extending-package) → cons
+- (**find-unresolved-extension** name extending-package) → cons
+
+- (**add-unresolved-extension** name symbols extending-package) → t
+- (**remove-unresolved-extension** name extending-package) → t
+
+  **remove-unresolved-extension** is required: once an extension is
+  resolved we need to remove the unresolved reference.
+
+- (**add-resolved-extension** extended-package extending-package) → t
+- (**remove-resolved-extension** extended-package extending-package) → t
+
+  **remove-resolved-extension** is only required if we add **unextend**.
+
+- (**add-extended-by** extending-package extended-package) → t
+- (**remove-extended-by** extending-package extended-package) → t
+
+  **remove-extended-by** is only required if we add **unextend**.
+
+
+
+### Extend and Export
+
+Do we restrict the symbols that can go in the extension list? We
+already have an **export** function (and option in **defpackage**),
+maybe the two sets should be disjoint?
+
+Exporting a symbol makes it available for all packages, by means of
+use package. Extend makes it available to a single package.
+
+
 
 
 ### Earlier Notes on Extending Packages

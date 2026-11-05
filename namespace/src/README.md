@@ -1,56 +1,68 @@
+
 # A Superset of the Common Lisp Package System
 
 The namespace system is a designed as a hierarchical implementation of
-the Common Lisp Package System.
+the Common Lisp Package System. It is intended to be compatible with
+the following exceptions:
+
+- we use _?_ (question mark) to end predicate function names, for
+  example **packagep** becomes **package?**.
+
+- we do not allow nicknames (local nicknames are allowed).
+
 
 ## System Organization
 
-The file "namespace.asd" specifies external dependencies and component load order.
+The file "namespace.asd" specifies external dependencies and component
+load order. If the system is located in [a place quicklisp can
+see](http://blog.quicklisp.org/2018/01/the-quicklisp-local-projects-mechanism.html),
+you can load it with (ql:quickload "namespace").
 
 The **#:namespace** package definition is found in "namespace.lisp".
 
 The entire system lives in a single namespace with functionality split
 into modules (directories and files inside the "src" directory:
 
-- classes—**package** and **symbol** class definitions.
+- _classes_—**package** and **symbol** class definitions.
 
-  The classes serves as data storage and objects for method
-  specialization. The internal-structure component below is used to
-  manipulate class slots, and store package objects in the top-level
-  of the hierarchy.
+  **package** objects stores data regarding relationships between
+  packages and which symbols are accessible. **symbol** objects are
+  implemented as names that can be shared between packages.
+  
+- _internal-structure_–a layer between the _classes_ and
+  _package-interface_/_symbol-interface_ modules.
 
-- conditions—**package-error** condition definitions.
+  Functions to manipulate and locate packages in the hierarchy are
+  defined in _package-manipulation.lisp_. Functions to locate and
+  share symbols are defined in _symbol-manipulation.lisp_.
 
-  Defines error conditions. Some are signaled by designator resolution
-  in the internal-structure component, but most signal an error during
-  package-interface operations.
+- _designator-resolution_—turn designators into the designated
+  objects.
 
-- internal-structure—variable definitions, package, symbol and
-  hierarchy manipulation.
+  Designator types are defined in the _internal-structure_
+  module. They are objects that are used in place of other objects.
+  For example, a string designator is a symbol or a string; both of
+  which resolves into a string.
 
-  The internal-structure components serves as a layer between classes
-  and package/symbol-interface. The external interfaces combine calls
-  into this module to perform their operations.
+- _conditions_—**package-error** condition definitions.
 
-- package-interface–public interface for packages and their
-  interactions with symbols.
+- _package-interface_–public interface for **package** operations.
 
-  This component defines one function per file. Each is exported from
-  the namespace package as part of its external interface. By design,
-  errors are intended to be signaled from here: we do not want
-  internal operations to appear in a stack trace.
+  Defines a superset of the functions listed in [The Packages
+  Dictionary](https://www.lispworks.com/documentation/HyperSpec/Body/c_packag.htm).
 
-- symbol-interface—public interface for symbols.
+- _symbol-interface_—public interface for **symbol** operations.
 
-  This component is organized like the package-interface
+  This component is organized like the _package-interface_
   component. Functions implemented so far are those needed to add
   symbols to packages,
 
-- compatibility—interoperability with standard Common Lisp.
+- _compatibility_—interoperability with standard Common Lisp.
 
   This includes printer functions to display our packages and symbols,
   and methods that allow us to use standard CL strings and symbols as
   arguments to our public interface.
+
 
 ## Test System Organization
 
@@ -66,21 +78,43 @@ To load the tests, do
 - (fiveam:run! 'test-namespace:namespace)
 
 
+## Terms
+
+- _location_—indicates where to look for a package.
+
+- _home_—where a package is located.
+
+- _peer_—a package that has the same home as a given package.
+
+- _top-level_—the list of packages that are not located inside another
+  package, **\*packages\***.
+
+- _internal package_—a a package that is not at the top-level.
+
+- _visible_—a package that can be found by **find-package**, and appears
+  in **list-all-packages**.
+
+- _current package_—package operations act on this package unless
+  specified otherwise, **\*package\***.
+
+
 ## The Package Hierarchy
 
-- _\*package\*_ holds the current package (as in Common Lisp).
+- **\*package\*** holds the current package (as in Common Lisp).
 
-- _\*packages\*_ holds the list of top-level packages.
+- **\*packages\*** holds the list of top-level packages.
 
 - Each package has a list of internal packages, returned by
-(**package-internal-list** _package_) → _list of package objects_.
+  (**package-internal-list** _package_) → _list of package objects_.
 
 - They also have a list of packages they are internal to, returned by
-(**package-internal-to-list** _package_) → _list of package objects_.
+  (**package-internal-to-list** _package_) → _list of package
+  objects_.
 
-- the three variables _\*lisp\*_, _\*keyword\*_ and _\*user\*_ holds
+- the three variables **\*lisp\***, **\*keyword\*** and **\*user\*** holds
   packages equivalent to "COMMON-LISP", "KEYWORD", and "CL-USER" in
   Common Lisp.
+
 
 ```
 ──────────────────────────────────────────────────────────────────────────────

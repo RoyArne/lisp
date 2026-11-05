@@ -295,3 +295,138 @@ subsytem or function. It needs to setup the variables \*packages\*,
 - [ ] **\*user\*** (Variable)
 
   Holds an empty package named "user".
+
+## Defpackage
+
+Packages can be composed by calls to **make-package** and subsequent
+calls to other functions in the package interface. However, it is
+assumed that **defpackage** will be the main interface for creating
+packages.
+
+A defpackage form looks something like figure 1:
+
+```
+(defpackage #:package-name
+
+   (:home #:home-package)
+
+   (:local-nicknames (#:nickname-1 #:actual-name-1)
+                     …
+                     (#:nickname-n #:actual-name-n))
+
+   (:extend #:package-to-extend
+            #:symbol-to-extend-with-1 … #:symbol-to-extend-with-n)
+
+   (:shadow #:shadow-symbol-1 … #:shadow-symbol-n)
+
+   (:shadowing-import-from #:shadowing-import-from-package
+                           #:shadowing-import-symbol-1 … #:shadowing-import-symbol-n)
+
+   (:use #:package-to-use-1 … #:package-to-use-n)
+
+   (:import-from #:import-from-package
+                 #:import-symbol-1 … #:import-symbol-n)
+
+   (:intern #:intern-symbol-1 … #:intern-symbol-n)
+
+   (:export #:export-symbol-1 … #:export-symbol-n)
+
+   (:publish #:published-package-1 … #:published-package-n)
+
+   (:size 64)
+
+   (:documentation "A documentation string."))
+
+;; Figure 1. A defpackage form.
+```
+
+The package name is required, a **string-designator**. The other
+elements are optional; **options** which are executed in this order:
+
+1. :home
+
+   Exactly one argument allowed: a string designator naming a package,
+   or nil. When executed, the named package becomes the new packages
+   home package. If nil is supplied, the new package becomes a
+   top-level package. The default action is to place the package in
+   the home package of the current package.
+   
+2. :local-nicknames
+3. :extend
+4. :shadow
+5. :shadowing-import-from
+6. :use
+7. :import-from
+8. :intern
+9. :export
+10. :publish
+11. :size
+12. :documentation
+
+**Defpackage** performs some basic validation of each option before it
+does any work:
+
+- we check that each option is a list, and
+- that the first element of each is one of the keywords above.
+
+Options may appear in any order in the defpackage form, they **must**
+be executed in the order above. The results of executing an option are
+_not_ undone if any later option fails.
+
+Any given option with no arguments is treated as not being supplied at
+all: the default action for that option takes place.
+
+
+### Expanding the Defpackage Macro
+
+The package-name is a **string-designator** and required. We use this
+to either name a new package, or to locate an existing package that
+will be modify. The given package-name can never cause a name
+conflict.
+
+The options are optional, all or none can be ommitted.
+
+### 1. The Home Option
+
+The home option is executed first; we must know where to place the
+package in order to:
+
+1. Check for any existing package.
+2. Find the packages that any local-nicknames map to.
+3. Find the packages we are using/importing symbols from.
+
+Its syntax is ```(:home package-name)``` where _package-name_ is
+either a **string-designator** naming a package. or **nil**.
+
+The :home option defaults to the home package of the current package
+if omitted. When given as **nil**, the new package is located in the
+top-level list of packages. Otherwise, the package is located in the
+internal-list of the named package.
+
+Presently there is an ambigous :home option construct allowed:
+```(:home)```. There are three interpretations:
+
+- the :home option is not given, place the new package in the current
+  packages home package.
+- the :home option is given, delibarately missing any name, meaning it
+  is **nil**. Place the new package in the top-level.
+- the :home option is malformed. Signal a program-error.
+
+
+
+The first thing we do is to resolve the home option: we cannot proceed
+without knowing where to place the package.
+
+The location is used to find any existing package with the given
+_package-name_. If there is such a package, we will modify
+it. Otherwise; a new package named _package-name_ is created in the
+home location.
+
+The new package (if any) is not placed in the hierarchy at this
+point. Nor do we relocate an existing package.
+
+
+
+
+
+  
