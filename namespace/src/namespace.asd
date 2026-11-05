@@ -37,7 +37,7 @@
                 :components ((:file "resolve-string-designator")
                              (:file "resolve-package-designator")
                              (:file "resolve-home-designator")))
-               
+
                (:module symbol-interface
                 :serial t
                 :depends-on ("namespace" classes)

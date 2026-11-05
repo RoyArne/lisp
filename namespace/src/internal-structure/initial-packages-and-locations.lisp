@@ -28,14 +28,24 @@
 
 
 (defparameter *package* *user*
-  "The current package. Functions that accept optional 'package'
-\(and 'contex'\) parameters, act on *package* by default.
+  "Variable:
+*package*
 
-Internal symbols of this package are available without the use of a
-namespace prefix.
+Description:
+A package object that acts as the current package: it is the default value for
+operations that manipulate and locate packages in the package hierarchy.
 
-The value of *package* is set by the in-package macro.")
+See Also:
+in-package \(macro\).")
 
 
 (defparameter *packages* (list  *user* *lisp* *keyword*)
-  "The list of top-level packages.")
+  "Variable:
+*packages*
+
+Description:
+Stores a list of package objects and acts as the top-level of the package
+hierarchy.
+
+See Also:
+list-all-packages \(function\).")
