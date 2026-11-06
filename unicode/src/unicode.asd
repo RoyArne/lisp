@@ -19,6 +19,7 @@
                 :depends-on ("unicode" "code-point")
                 :components ((:file "utf-8")
                              (:file "type-definitions")
+                             (:file "conditions")
                              (:file "encoding-and-decoding")
                              (:file "vectors")
                              (:file "comparisons")
