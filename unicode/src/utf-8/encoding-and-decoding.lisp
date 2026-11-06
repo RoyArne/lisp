@@ -385,7 +385,10 @@ match the bit pattern of any initial octet."
     ((1/2? initial-octet) 2)
     ((1/3? initial-octet) 3)
     ((1/4? initial-octet) 4)
-    (t (error "Cannot compute the encoding length of ~B." initial-octet))))
+    (t (error 'utf-8-error
+              :message "Cannot compute the encoding length because the octet~%  # b~B~%~
+                        is not the initial octet of an UTF-8 encoded code point."
+              :octets initial-octet))))
 
 (defun encoding-length (vector start)
   "Return the encoding length of the code point encoded at START in
@@ -402,7 +405,10 @@ any initial octet."
     ((in-2-octet-range? code-point) 2)
     ((in-3-octet-range? code-point) 3)
     ((in-4-octet-range? code-point) 4)
-    (t (error "Cannot compute the encoded length of ~X." code-point))))
+    (t (error 'utf-8-error
+              :message "Cannot compute the encoded length of the code point~%  ~S~%~
+                        because it is outside the unicode range."
+              :octets code-point))))
 
 (defun initial-octet (code-point)
   "Return the initial octet of CODE-POINT."
@@ -446,15 +452,15 @@ code point outside the unicode range."
      (let ((code-point (decode4 vector start)))
        (if (<= code-point +4-octet-range-end+)
            (values code-point (+ start 4))
-           (error "Cannot decode a code point beginning at~%  ~S~%~
-                   in~%  ~S~%~
-                   because the octets at that position encodes a code point outside the unicode range."
-                  start vector))))
+           (error 'utf-8-error
+                  :message "Cannot decode the octets~%  ~S~%~
+                            because those octets encode a code point outside the unicode range."
+                  :octets (subseq vector start 4)))))
     (t
-     (error "Cannot decode a code point beginning at~%  ~S~%~
-             in~%  ~S~%~
-             because the octet at that position is a continuation octet."
-            start vector))))
+     (error 'utf-8-error
+            :message "Cannot decode a code point whose initial octet is~%  #b~B~%~
+                      because that is a continuation octet."
+            :octets (octet1 vector start)) )))
 
 (defun encode-code-point (code-point vector start)
   "Encode CODE-POINT at the START position in VECTOR and return the end index of
