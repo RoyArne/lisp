@@ -329,4 +329,24 @@
     (values (+ start encoding-length) nil)))
 
 ;; (defun unread-code-point (octet-stream vector start)
-;;   )
+;;   ;; Unread the code point encoded at start in vector. Return true if the code
+;;   ;; point was unread, otherwise nil.
+;;   (when (< (unread-count octet-stream) 2)
+;;     (let ((encoding-length (%encoding-length (aref vector start))))
+;;       (cond
+;;         ((use-prev-buffer? octet-stream)
+;;          (when (invalid-prev-buffer? octet-stream)
+;;            (return-from unread-code-point nil))
+;;          (use-prev-buffer! octet-stream)
+;;          (incf (unread-count octet-stream))
+;;          t)
+;;         ((>= (buffer-index octet-stream) encoding-length)
+;;          (decf (buffer-index octet-stream) encoding-length)
+;;          (incf (unread-count octet-stream))
+;;          t)
+;;         (t
+;;          (when (invalid-prev-buffer? octet-stream)
+;;            (return-from unread-code-point nil))
+;;          (use-prev-buffer! octet-stream)
+;;          (incf (unread-count octet-stream))
+;;          t)))))
