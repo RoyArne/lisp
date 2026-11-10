@@ -12,6 +12,11 @@
   ;; utf-8/type-definitions.lisp
   (:export #:octet #:octets)
 
+  ;; utf-8/conditions.lisp
+  (:export #:utf-8-error
+           #:utf-8-error-octets
+           #:utf-8-error-message)
+
   ;; utf-8/encoding-and-decoding.lisp
   (:export #:initial-octet
            #:encoding-length #:encoded-length
@@ -32,10 +37,15 @@
            #:empty? #:*empty*
            #:next #:previous)
 
+  ;; utf-8/stream.lisp
+  (:export #:octet-stream
+           #:initialize-octet-stream
+           #:read-code-point)
+
   ;; utf-8/comparisons.lisp
   (:export #:compare
-           #:octets= #:octets/= #:octets< #:octets> #:octets<= #:octets>=
-           #:code-point= #:code-point/= #:code-point< #:code-point> #:code-point<= #:code-point>=)
+           #:octets= #:octets≠ #:octets< #:octets> #:octets≤ #:octets≥
+           #:code-point= #:code-point≠ #:code-point< #:code-point> #:code-point≤ #:code-point≥)
 
   ;; utf-8/fnv-1a.lisp
   (:export #:fnv-1a/64

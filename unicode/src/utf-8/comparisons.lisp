@@ -3,14 +3,14 @@
 
 ;;; Comparing Octet Vectors
 ;;;
-;;; We define octets=, octets/=, octets<, octets>, octets<=, and octets>=. They
+;;; We define octets=, octets≠, octets<, octets>, octets≤, and octets≥. They
 ;;; are all build around the compare function, and equivalent to string=,
-;;; string/=, and so on.
+;;; string≠, and so on.
 ;;;
 ;;; Comparing Code Point Encodings
 ;;;
-;;; We define code-point=, code-point/=, code-point<, code-point>,
-;;; code-point<=, and code-point>=. They are equivalent to char=, char/=, and
+;;; We define code-point=, code-point≠, code-point<, code-point>,
+;;; code-point≤, and code-point≥. They are equivalent to char=, char≠, and
 ;;; so on.
 
 (declaim (ftype (function (octets vector:index vector:index octets vector:index vector:index)
@@ -25,7 +25,7 @@
          (ftype (function (octets octets &key (:start1 vector:index) (:end1 vector:end-index)
                                               (:start2 vector:index) (:end2 vector:end-index))
                           (or null vector:index))
-                octets/= octets< octets> octets<= octets>=))
+                octets≠ octets< octets> octets≤ octets≥))
 
 (defun compare (vector1 start1 end1 vector2 start2 end2)
   "Return two values, the integer result of the comparison and a mismatch
@@ -64,7 +64,7 @@ octets \(compared by =\)."
     (when (= (- end1 start1) (- end2 start2))
       (zerop (compare vector1 start1 end1 vector2 start2 end2)))))
       
-(defun octets/= (vector1 vector2 &key (start1 0) end1 (start2 0) end2)
+(defun octets≠ (vector1 vector2 &key (start1 0) end1 (start2 0) end2)
   "Return the offset from START1 and START2 to the first octet that differs from
 VECTOR1 to VECTOR2. Return NIL if there is no such octet."
   (let ((end1 (vector:end vector1 end1))
@@ -101,7 +101,7 @@ such octet."
                      (> (- end1 start1) (- end2 start2))))
         mismatch))))
 
-(defun octets<= (vector1 vector2 &key (start1 0) end1 (start2 0) end2)
+(defun octets≤ (vector1 vector2 &key (start1 0) end1 (start2 0) end2)
   (let ((end1 (vector:end vector1 end1))
         (end2 (vector:end vector2 end2)))
     (multiple-value-bind (difference mismatch)
@@ -110,7 +110,7 @@ such octet."
                  (<= (- end1 start1) (- end2 start2)))
         mismatch))))
 
-(defun octets>= (vector1 vector2 &key (start1 0) end1 (start2 0) end2)
+(defun octets≥ (vector1 vector2 &key (start1 0) end1 (start2 0) end2)
   (let ((end1 (vector:end vector1 end1))
         (end2 (vector:end vector2 end2)))
     (multiple-value-bind (difference mismatch)
@@ -125,7 +125,7 @@ such octet."
 
 (declaim (ftype (function (octets vector:index octets vector:index)
                           boolean)
-                code-point= code-point/= code-point< code-point> code-point<= code-point>=))
+                code-point= code-point≠ code-point< code-point> code-point≤ code-point≥))
 
 (defmacro octetn (n vector start)
   `(aref ,vector (+ ,n ,start)))
@@ -152,27 +152,27 @@ same as the one at START2 in VECTOR2; otherwise, false."
                      (octetn= 3 vector1 start1 vector2 start2))))))))
 
 
-(defmacro octet1/= (vector1 start1 vector2 start2)
+(defmacro octet1≠ (vector1 start1 vector2 start2)
   `(/= (octet1 ,vector1 ,start1) (octet1 ,vector2 ,start2)))
 
-(defmacro octetn/= (n vector1 start1 vector2 start2)
+(defmacro octetn≠ (n vector1 start1 vector2 start2)
   `(/= (octetn ,n ,vector1 ,start1) (octetn ,n ,vector2 ,start2)))
 
-(defun code-point/= (vector1 start1 vector2 start2)
+(defun code-point≠ (vector1 start1 vector2 start2)
   "True if the code point encoded at START1 in VECTOR1 is
 different from the one at START2 in VECTOR2; otherwise, false."
-  (or (octet1/= vector1 start1 vector2 start2)
+  (or (octet1≠ vector1 start1 vector2 start2)
       (let ((length1 (encoding-length vector1 start1))
             (length2 (encoding-length vector2 start2)))
         (or (/= length1 length2)
             (case length1
               (1 nil)
-              (2 (octetn/= 1 vector1 start1 vector2 start2))
-              (3 (or (octetn/= 1 vector1 start1 vector2 start2)
-                     (octetn/= 2 vector1 start1 vector2 start2)))
-              (4 (or (octetn/= 1 vector1 start1 vector2 start2)
-                     (octetn/= 2 vector1 start1 vector2 start2)
-                     (octetn/= 3 vector1 start1 vector2 start2))))))))
+              (2 (octetn≠ 1 vector1 start1 vector2 start2))
+              (3 (or (octetn≠ 1 vector1 start1 vector2 start2)
+                     (octetn≠ 2 vector1 start1 vector2 start2)))
+              (4 (or (octetn≠ 1 vector1 start1 vector2 start2)
+                     (octetn≠ 2 vector1 start1 vector2 start2)
+                     (octetn≠ 3 vector1 start1 vector2 start2))))))))
 
 
 (defmacro octet1< (vector1 start1 vector2 start2)
@@ -215,7 +215,7 @@ than the one at START2 in VECTOR2; otherwise, false."
                        unless (octetn= i  vector1 start1 vector2 start2) do (return nil)))))))
 
 
-(defun code-point<= (vector1 start1 vector2 start2)
+(defun code-point≤ (vector1 start1 vector2 start2)
   "True if the code point encoded at START1 in VECTOR1 is less
 than or equal to the one at START2 in VECTOR2; otherwise, false."
   (or (octet1< vector1 start1 vector2 start2)
@@ -229,7 +229,7 @@ than or equal to the one at START2 in VECTOR2; otherwise, false."
                        finally (return (octetn= (1- length1) vector1 start1 vector2 start2))))))))
 
 
-(defun code-point>= (vector1 start1 vector2 start2)
+(defun code-point≥ (vector1 start1 vector2 start2)
   "True if the code point encoded at START1 in VECTOR1 is greater
 than or equal to the one at START2 in VECTOR2; otherwise, false."
   (or (octet1> vector1 start1 vector2 start2)

@@ -22,6 +22,7 @@
                              (:file "conditions")
                              (:file "encoding-and-decoding")
                              (:file "vectors")
+                             (:file "stream")
                              (:file "comparisons")
                              (:file "fnv-1a")
                              (:file "compatibility")))
