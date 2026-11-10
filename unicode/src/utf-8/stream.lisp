@@ -127,6 +127,12 @@
   ;; Unread count goes up to 2 to accommodate CRLF newline sequences.
   (unread-count 0 :type (integer 0 2)))
 
+(declaim (ftype (function (octet-stream)
+                          boolean)
+                end-of-file?))
+
+(defun end-of-file? (octet-stream)
+  (buffer-end-of-file? octet-stream))
 
 (declaim (ftype (function (octet-stream)
                           octet-stream)

@@ -40,7 +40,8 @@
   ;; utf-8/stream.lisp
   (:export #:octet-stream
            #:initialize-octet-stream
-           #:read-code-point)
+           #:read-code-point
+           #:end-of-file?)
 
   ;; utf-8/comparisons.lisp
   (:export #:compare
