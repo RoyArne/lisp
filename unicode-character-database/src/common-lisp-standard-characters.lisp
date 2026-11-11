@@ -190,3 +190,22 @@ _;low line, or underscore;SP09;constituent;alphabetic;standard
                    :if-does-not-exist :create
                    :external-format :utf-8)
     (table:write-property-map (common-lisp-syntax-types) stream)))
+
+;;; We make a traits property map with the following properties: "package
+;;; marker" "alphadigit" "alphabetic" "invalid".
+
+(defun common-lisp-traits ()
+  (table:construct-property-map (:test 'eql)
+    (loop for line in (common-lisp-character-database!)
+          do (with-nth-fields line ((code-point 0)
+                                    (trait 4))
+               (table:add-entry code-point (string-to-keyword trait))))))
+
+(defun write-common-lisp-traits ()
+  (with-open-file (stream
+                   (data-pathname "common-lisp-traits.lisp")
+                   :direction :output
+                   :if-exists :supersede
+                   :if-does-not-exist :create
+                   :external-format :utf-8)
+    (table:write-property-map (common-lisp-traits) stream)))
