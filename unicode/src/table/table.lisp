@@ -48,4 +48,4 @@
            #:compatibility-decomposition-of)
 
   ;; "src/common-lisp-standard-characters.lisp"
-  (:export #:common-lisp-syntax-types))
+  (:export #:common-lisp-syntax-type-of))
