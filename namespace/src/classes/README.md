@@ -251,7 +251,16 @@ maybe the two sets should be disjoint?
 Exporting a symbol makes it available for all packages, by means of
 use package. Extend makes it available to a single package.
 
+### Extend and Syntacx for Accessing Internal Symbols
 
+In Common Lisp, we can use the syntax package::symbol to access
+symbols that are not exported. This will not be allowed, but we could
+use the extend operation to allow this kind of use for a specific
+package.
+
+This makes defpackage implementation simpler too, only the extending
+package need worry about extending symbols. Then the reader is
+responsible for checking that package::symbol is allowed.
 
 
 ### Earlier Notes on Extending Packages

@@ -43,6 +43,10 @@ The functions are intended to validate names, but this is not
 implemented yet. For now they simply write the given strings into the
 **name** slots.
 
+- [Unicode Security Mechanisms](http://www.unicode.org/reports/tr39/)
+
+- [Unicode Identifiers and Syntax](https://www.unicode.org/reports/tr31/)
+
 
 ## Initial Packages and Locations
 
