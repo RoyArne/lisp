@@ -4,3 +4,8 @@
 # Common Lisp
 *.fasl
 *.FASL
+
+# Unignore README.md files inside any data directory
+!**/data/
+**/data/**
+!**/data/README.md
