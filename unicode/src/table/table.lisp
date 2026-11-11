@@ -45,4 +45,7 @@
            #:combining-class-of
            #:bidirectional-category-of
            #:canonical-decomposition-of
-           #:compatibility-decomposition-of))
+           #:compatibility-decomposition-of)
+
+  ;; "src/common-lisp-standard-characters.lisp"
+  (:export #:common-lisp-syntax-types))
