@@ -16,7 +16,8 @@
            #:when-nth-field
            #:with-nth-fields)
 
-  (:export #:load-database-file))
+  (:export #:read-database-stream
+           #:load-database-file))
 
 (in-package #:unicode-character-database.parser)
 
@@ -128,8 +129,20 @@ element to the name variable."
 ;;; Parsing Database Files
 ;;; ======================
 
-(declaim (ftype (function (string) list)
+(declaim (ftype (function (stream)
+                          list)
+                read-database-stream)
+         
+         (ftype (function (string) list)
                 load-database-file))
+
+(defun read-database-stream (stream)
+  "Return a list of lines where each line is a list of fields. The first field is
+a code point field parsed by means of parse-code-point-field. The remaining
+fields are strings."
+  (loop for line = (read-database-line stream nil)
+        while line
+        collect line))
 
 (defun load-database-file (filename)
   "Read the NAME file and return a list of database lines. Each line is a list
@@ -140,6 +153,4 @@ is parsed by means of parse-code-point-field."
                    :direction :input
                    :element-type 'character
                    :external-format :utf-8)
-    (loop for line = (read-database-line stream nil)
-          while line
-          collect line)))
+    (read-database-stream stream)))

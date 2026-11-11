@@ -23,8 +23,10 @@
            #:with-nth-fields)
 
   ;; "src/parser.lisp"
-  (:export #:load-database-file)
+  (:export #:read-database-stream
+           #:load-database-file)
 
+  ;; "src/unicodedata.lisp"
   (:export #:unicodedata!
            #:character-names
            #:general-category
