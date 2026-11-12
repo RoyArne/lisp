@@ -5,7 +5,12 @@
 
   (:local-nicknames (#:code-point #:unicode.code-point)
                     (#:utf-8 #:unicode.utf-8)
-                    (#:table #:unicode.table)))
+                    (#:table #:unicode.table))
+
+  (:export #:common-lisp-syntax-types
+           #:write-common-lisp-syntax-types
+           #:common-lisp-traits
+           #:write-common-lisp-traits))
   
 (in-package #:unicode-character-database.common-lisp)
 
@@ -171,6 +176,15 @@ _;low line, or underscore;SP09;constituent;alphabetic;standard
 (defun string-to-keyword (string)
   (intern (substitute #\- #\Space (string-upcase string)) "KEYWORD"))
 
+(defmacro with-output-stream ((stream filename) &body body)
+  `(with-open-file (,stream
+                   (data-pathname ,filename)
+                   :direction :output
+                   :if-exists :supersede
+                   :if-does-not-exist :create
+                   :external-format :utf-8)
+     ,@body))
+
 ;;; We make a syntax-type property-map with the following
 ;;; properties:"whitespace" "non-terminating macro character" "single escape"
 ;;; "terminating macro character" "multiple escape" "constituent"
@@ -183,12 +197,7 @@ _;low line, or underscore;SP09;constituent;alphabetic;standard
                (table:add-entry code-point (string-to-keyword syntax-type))))))
           
 (defun write-common-lisp-syntax-types ()
-  (with-open-file (stream
-                   (data-pathname "common-lisp-syntax-types.lisp")
-                   :direction :output
-                   :if-exists :supersede
-                   :if-does-not-exist :create
-                   :external-format :utf-8)
+  (with-output-stream (stream "common-lisp-syntax-types.lisp")
     (table:write-property-map (common-lisp-syntax-types) stream)))
 
 ;;; We make a traits property map with the following properties: "package
@@ -202,10 +211,5 @@ _;low line, or underscore;SP09;constituent;alphabetic;standard
                (table:add-entry code-point (string-to-keyword trait))))))
 
 (defun write-common-lisp-traits ()
-  (with-open-file (stream
-                   (data-pathname "common-lisp-traits.lisp")
-                   :direction :output
-                   :if-exists :supersede
-                   :if-does-not-exist :create
-                   :external-format :utf-8)
+  (with-output-stream (stream "common-lisp-traits.lisp")
     (table:write-property-map (common-lisp-traits) stream)))

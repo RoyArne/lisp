@@ -10,6 +10,6 @@
   :serial t
   :components ((:file "unicode-character-database")
                (:file "configuration")
-               ;(:file "pathnames")
                (:file "parser")
-               (:file "unicodedata")))
+               (:file "unicodedata")
+               (:file "common-lisp-standard-characters")))
