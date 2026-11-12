@@ -309,11 +309,22 @@
 ;;; ============================================================================
 
 (defmacro construct-property-table ((property) &body body)
-  "
+  "Return a PROPERTY-TABLE constructed by means of the local function ADD-ENTRY:
+
+  \(add-entry entry\)
+
+where entry is a range or a code-point. For example,
+
+\(construct-code-point-map \('in-the-table\)
+  \(loop for code-point in \(sort \(map 'list #'char-code \"ABCDEFÆØÅ-.,—–·…\"\) #'<\)
+        do \(add-entry code-point\)\)\)
+
+constructs a table where every character has the 'in-the-table property.
+
 Note that entries MUST be added in ascending order. Otherwise; the lookup
 functions will not work, and entries may be merged in unexpected ways."
   (let ((table (gensym "PROPERTY-TABLE")))
-    `(let ((,table (make-property-table)))
+    `(let ((,table (make-property-table :property ,property)))
        (flet ((add-entry (entry)
                 (add-entry-to-property-table! entry
                                               (property-table-filter ,table)
