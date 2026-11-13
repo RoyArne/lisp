@@ -3,8 +3,9 @@
 
 ## unicode.lisp
 
-This is the package definition for the whole unicode system. It is an
-empty package presently; we still need to figure out what goes in it.
+This is the package definition for the whole unicode system. For now
+it only exports property names from "PropList.txt"in the Unicode
+Character Database.
 
 ## configuration.lisp
 
@@ -34,6 +35,9 @@ with utf-8 encoded text.
 
 The **#:unicode.table** package provides table structures that are
 mainly used to store data from the Unicode Character Database.
+
+It also provides the functions that are used to load and lookup
+characters in the tables.
 
 ## rope
 
