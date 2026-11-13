@@ -12,4 +12,5 @@
                (:file "configuration")
                (:file "parser")
                (:file "unicodedata")
+               (:file "proplist")
                (:file "common-lisp-standard-characters")))

@@ -387,5 +387,3 @@ Unicode, Inc. (1999) UnicodeData File Format
                               :external-format :utf-8)
                (table:write-table table stream)))
     t))
-                          
-  

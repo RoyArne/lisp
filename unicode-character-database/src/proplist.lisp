@@ -3,7 +3,9 @@
   (:use #:common-lisp
         #:unicode-character-database)
 
-  (:local-nicknames (#:code-point #:unicode.code-point)
+  (:local-nicknames (#:configuration #:unicode-character-database.configuration)
+                    (#:parser #:unicode-character-database.parser)
+                    (#:code-point #:unicode.code-point)
                     (#:utf-8 #:unicode.utf-8)
                     (#:table #:unicode.table))
 
@@ -46,6 +48,8 @@
                 #:unified-ideograph
                 #:variation-selector
                 #:white-space)
+
+  (:export #:write-proplist-tables)
   
   (:documentation
    "The #:unicode-character-database.proplist package creates property tables from
@@ -98,15 +102,15 @@ https://www.unicode.org/reports/tr44/#PropList.txt"))
   "A list of all the property names found in PropList.txt.
 Sourced from https://www.unicode.org/reports/tr44/#PropList.txt")
 
-(defparameter *proplist* nil)
-
 (defun parse-proplist (proplist)
   (loop for line in proplist
         collect (list (first line) (or (rest (find (second line) *property-names* :key 'first :test 'string-equal))
                                        (error "There is no property named ~S." (second line))))))
 
+(defparameter *proplist* nil)
+
 (defun load-proplist! ()
-  (setf *proplist* (parse-proplist (load-database-file "PropList.txt")))
+  (setf *proplist* (parse-proplist (parser:load-database-file "PropList.txt")))
   t)
 
 (defun proplist! ()
@@ -114,19 +118,25 @@ Sourced from https://www.unicode.org/reports/tr44/#PropList.txt")
     (load-proplist!))
   *proplist*)
 
-(defun list-characters (property-name)
-  (mapcar 'first (remove-if (complement #'(lambda (name)
-                                            (eql property-name name)))
-                            (proplist!)
-                            :key 'second)))
-
 (defun make-table (property-name)
   (table:construct-property-table (property-name)
-    (loop for code-point in (list-characters property-name)
+    (loop for code-point in (mapcar 'first (remove-if (complement #'(lambda (name)
+                                                                      (eql property-name name)))
+                                                      (proplist!)
+                                                      :key 'second))
           do (table:add-entry code-point))))
 
-(defun pattern-white-space ()
-  (make-table 'pattern-white-space))
+(defun write-proplist-tables ()
+  (configuration:ensure-data-directory-exists "proplist")
+  (loop for property-name in (mapcar 'rest *property-names*)
+        do (with-open-file (stream
+                            (configuration:data-pathname (configuration:make-table-filename property-name)
+                                                         :directory "proplist")
+                            :direction :output
+                            :if-exists :supersede
+                            :if-does-not-exist :create
+                            :external-format :utf-8)
+             (table:write-table (make-table property-name) stream)))
+  t)
 
-(defun white-space ()
-  (make-table 'white-space))
+  

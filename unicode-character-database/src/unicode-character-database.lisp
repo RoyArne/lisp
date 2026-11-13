@@ -12,5 +12,8 @@
   ;; "src/unicodedata.lisp"
   (:export #:write-unicodedata-tables)
 
+  ;; "src/proplist.lisp"
+  (:export #:write-proplist-tables)
+
   ;; src/common-lisp-standard-characters.lisp
   (:export #:write-common-lisp-tables))
