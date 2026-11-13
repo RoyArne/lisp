@@ -3,7 +3,8 @@
   (:use #:common-lisp
         #:unicode-character-database)
 
-  (:local-nicknames (#:code-point #:unicode.code-point)
+  (:local-nicknames (#:configuration #:unicode-character-database.configuration)
+                    (#:code-point #:unicode.code-point)
                     (#:utf-8 #:unicode.utf-8)
                     (#:table #:unicode.table))
 
@@ -149,7 +150,7 @@ fields are strings."
 of fields, beginning with a code point field. Note that the code point field
 is parsed by means of parse-code-point-field."
   (with-open-file (stream
-                   (make-unicode-character-database-pathname filename)
+                   (configuration:make-unicode-character-database-pathname filename)
                    :direction :input
                    :element-type 'character
                    :external-format :utf-8)

@@ -3,14 +3,17 @@
   (:use #:common-lisp
         #:unicode-character-database)
 
-  (:local-nicknames (#:code-point #:unicode.code-point)
+  (:local-nicknames (#:configuration #:unicode-character-database.configuration)
+                    (#:parser #:unicode-character-database.parser)
+                    (#:code-point #:unicode.code-point)
                     (#:utf-8 #:unicode.utf-8)
                     (#:table #:unicode.table))
 
   (:export #:common-lisp-syntax-types
            #:write-common-lisp-syntax-types
            #:common-lisp-traits
-           #:write-common-lisp-traits))
+           #:write-common-lisp-traits
+           #:write-common-lisp-tables))
   
 (in-package #:unicode-character-database.common-lisp)
 
@@ -152,6 +155,9 @@ _;low line, or underscore;SP09;constituent;alphabetic;standard
         '<
         :key 'first))
 
+;; We write the characters to stream in the Unicode Character Database format
+;; and read it back in again.
+
 (defun print-character (line &optional (stream *standard-output*))
   ;;      code-point;name;graphic ID;syntax-type;Traits;status
   (destructuring-bind (code-point name graphic-id syntax-type traits status)
@@ -164,7 +170,7 @@ _;low line, or underscore;SP09;constituent;alphabetic;standard
 
 (defun read-common-lisp-standard-characters ()
   (with-input-from-string (stream (with-output-to-string (stream) (print-characters (read-fields) stream)))
-    (read-database-stream stream)))
+    (parser:read-database-stream stream)))
 
 (defparameter *common-lisp-character-database* nil)
 
@@ -178,7 +184,7 @@ _;low line, or underscore;SP09;constituent;alphabetic;standard
 
 (defmacro with-output-stream ((stream filename) &body body)
   `(with-open-file (,stream
-                   (data-pathname ,filename)
+                   (configuration:data-pathname ,filename)
                    :direction :output
                    :if-exists :supersede
                    :if-does-not-exist :create
@@ -192,7 +198,7 @@ _;low line, or underscore;SP09;constituent;alphabetic;standard
 (defun common-lisp-syntax-types ()
   (table:construct-property-map (:test 'eql)
     (loop for line in (common-lisp-character-database!)
-          do (with-nth-fields line ((code-point 0)
+          do (parser:with-nth-fields line ((code-point 0)
                                     (syntax-type 3))
                (table:add-entry code-point (string-to-keyword syntax-type))))))
           
@@ -206,10 +212,15 @@ _;low line, or underscore;SP09;constituent;alphabetic;standard
 (defun common-lisp-traits ()
   (table:construct-property-map (:test 'eql)
     (loop for line in (common-lisp-character-database!)
-          do (with-nth-fields line ((code-point 0)
+          do (parser:with-nth-fields line ((code-point 0)
                                     (trait 4))
                (table:add-entry code-point (string-to-keyword trait))))))
 
 (defun write-common-lisp-traits ()
   (with-output-stream (stream "common-lisp-traits.lisp")
     (table:write-property-map (common-lisp-traits) stream)))
+
+(defun write-common-lisp-tables ()
+  (write-common-lisp-syntax-types)
+  (write-common-lisp-traits)
+  t)

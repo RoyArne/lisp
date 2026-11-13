@@ -3,7 +3,9 @@
   (:use #:common-lisp
         #:unicode-character-database)
 
-  (:local-nicknames (#:code-point #:unicode.code-point)
+  (:local-nicknames (#:configuration #:unicode-character-database.configuration)
+                    (#:parser #:unicode-character-database.parser)
+                    (#:code-point #:unicode.code-point)
                     (#:utf-8 #:unicode.utf-8)
                     (#:table #:unicode.table))
 
@@ -120,7 +122,7 @@ Unicode, Inc. (1999) UnicodeData File Format
   (labels ((code-point (line)                                        ; 0. A code-point.
              (nth 0 line))
            (name (line)                                              ; 1. A string.
-             (with-nth-field (name 1 line)
+             (parser:with-nth-field (name 1 line)
                (if (string-equal "<control>" name)
                    (case (nth 0 line)
                      (128 "PADDING CHARACTER")
@@ -132,7 +134,7 @@ Unicode, Inc. (1999) UnicodeData File Format
                    name)))
            
            (general-category (line)                                  ; 2. A list of names (strings).
-             (with-nth-field (gc 2 line)
+             (parser:with-nth-field (gc 2 line)
                (or (find gc *general-category-names* :key #'first :test #'string-equal)
                    (error "The general category~%  ~A~%is undefined." gc))))
            
@@ -143,24 +145,24 @@ Unicode, Inc. (1999) UnicodeData File Format
              (nth 4 line))
            
            (decomposition-mapping (line)                             ; 5. A list: a keyword followed by code points.
-             (when-nth-field (mapping 5 line)                        ;    Nil if there is no mapping.
+             (parser:when-nth-field (mapping 5 line)                        ;    Nil if there is no mapping.
                ;; Compatibility mappings are preceded by '<compat>'.
                (if (char= #\< (char mapping 0))
                    (cons :compatibility
-                         (parse-sequence (subseq mapping (1+ (position #\> mapping :test #'char=)))))
+                         (parser:parse-sequence (subseq mapping (1+ (position #\> mapping :test #'char=)))))
                    (cons :canonical
-                         (parse-sequence mapping)))))
+                         (parser:parse-sequence mapping)))))
            
            (decimal-digit-value (line)                               ; 6. An integer or nil.
-             (when-nth-field (decimal-digit-value 6 line)
+             (parser:when-nth-field (decimal-digit-value 6 line)
                (parse-integer decimal-digit-value)))
            
            (digit-value (line)                                       ; 7. An integer or nil.
-             (when-nth-field (digit-value 7 line)
+             (parser:when-nth-field (digit-value 7 line)
                (parse-integer digit-value)))
            
            (numeric-value (line)                                     ; 8. A number or nil.
-             (when-nth-field (numeric-value 8 line)
+             (parser:when-nth-field (numeric-value 8 line)
                (let ((split (position #\/ numeric-value :test #'char=)))
                  (if split
                      (/ (parse-integer numeric-value :start 0 :end split)
@@ -168,30 +170,30 @@ Unicode, Inc. (1999) UnicodeData File Format
                      (parse-integer numeric-value)))))
            
            (mirrored (line)                                          ; 9. A boolean.
-             (with-nth-field (mirrored 9 line)
+             (parser:with-nth-field (mirrored 9 line)
                (cond
                  ((char-equal #\Y (char mirrored 0)) t)
                  ((char-equal #\N (char mirrored 0)) nil)
                  (t (error "The value for mirrored~%  ~A~%is not 'Y' or 'N'." mirrored)))))
            
            (unicode-1.0-name (line)                                  ; 10. A string or nil.
-             (when-nth-field (name 10 line)
+             (parser:when-nth-field (name 10 line)
                name))
            
            (comment-field (line)                                     ; 11. A string or nil.
-             (when-nth-field (comment 11 line)                       
+             (parser:when-nth-field (comment 11 line)                       
                comment))
            
            (uppercase-mapping (line)                                 ; 12. A code point or nil.
-             (when-nth-field (uppercase-mapping 12 line)
+             (parser:when-nth-field (uppercase-mapping 12 line)
                (parse-integer uppercase-mapping :radix 16)))
            
            (lowercase-mapping (line)                                 ; 13. A code point or nil.
-             (when-nth-field (lowercase-mapping 13 line)
+             (parser:when-nth-field (lowercase-mapping 13 line)
                (parse-integer lowercase-mapping :radix 16)))
            
            (titlecase-mapping (line)                                 ; 14. A code point or nil.
-             (when-nth-field (titlecase-mapping 14 line)
+             (parser:when-nth-field (titlecase-mapping 14 line)
                (parse-integer titlecase-mapping :radix 16))))
     
     (loop for line in lines
@@ -243,7 +245,7 @@ Unicode, Inc. (1999) UnicodeData File Format
                :key #'first)))
 
 (defun load-unicodedata! ()
-  (setf *unicodedata* (parse-unicodedata (preprocess-unicodedata (load-database-file "UnicodeData.txt"))))
+  (setf *unicodedata* (parse-unicodedata (preprocess-unicodedata (parser:load-database-file "UnicodeData.txt"))))
   t)
 
 (defun unicodedata! ()
@@ -360,8 +362,9 @@ Unicode, Inc. (1999) UnicodeData File Format
         (table:add-entry code-point titlecase-mapping)))))
 
 (defun write-unicodedata-tables ()
+  (configuration:ensure-data-directory-exists "unicodedata")
   (flet ((list-filename/table (name)
-           (list (concatenate 'string (string-downcase name) ".lisp")
+           (list (configuration:make-table-filename name)
                  (funcall name))))
     (loop for (name table) in (map 'list #'list-filename/table '(character-names
                                                                  general-category
@@ -377,7 +380,7 @@ Unicode, Inc. (1999) UnicodeData File Format
                                                                  lowercase-mapping
                                                                  titlecase-mapping))
           do (with-open-file (stream
-                              (data-pathname name)
+                              (configuration:data-pathname name :directory "unicodedata")
                               :direction :output
                               :if-exists :supersede
                               :if-does-not-exist :create
