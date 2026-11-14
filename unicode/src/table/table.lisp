@@ -2,7 +2,8 @@
 (defpackage #:unicode.table
   (:use #:common-lisp #:unicode)
 
-  (:local-nicknames (#:code-point #:unicode.code-point)
+  (:local-nicknames (#:files #:unicode.files)
+                    (#:code-point #:unicode.code-point)
                     (#:utf-8 #:unicode.utf-8)
                     (#:vector #:system.sequence.vector))
 

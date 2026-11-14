@@ -2,42 +2,9 @@
 ;;;;
 ;;;; "unicodedata.lisp" defines tables and lookup functions for data in
 ;;;; UnicodeData.txt from the Unicode Character Database. Our tables are
-;;;; stored in the "data/UCD/UnicodeData/" directory, one file per table:
-;;;;
-;;;; · "character-names.lisp"
-;;;; · "general-category.lisp"
-;;;; · "canonical-combining-classes.lisp"
-;;;; · "bidirectional-category.lisp"
-;;;; · "canonical-decomposition-mapping.lisp"
-;;;; · "compatibility-decomposition-mapping.lisp"
-;;;; · "decimal-digit-value.lisp"
-;;;; · "digit-value.lisp"
-;;;; · "numeric-value.lisp"
-;;;; · "mirrored.lisp"
-;;;; · "uppercase-mapping.lisp"
-;;;; · "lowercase-mapping.lisp"
-;;;; · "titlecase-mapping.lisp"
+;;;; stored in the "data/UCD/UnicodeData/" directory, one file per table.
 
 (in-package #:unicode.table)
-
-
-;;; ============================================================================
-;;; Reading Data Files
-;;; ============================================================================
-
-(declaim (ftype (function (string (or property-table property-map code-point-map string-map))
-                          (or property-table property-map code-point-map string-map))
-                read-unicodedata))
-
-(defun read-unicodedata (filename default)
-  (with-open-file (stream
-                   (unicode.files:table-pathname (concatenate 'string "UCD/UnicodeData/" filename))
-                   :if-does-not-exist nil
-                   :external-format :utf-8)
-    (if stream
-        (read-table :stream stream :table-type (type-of default))
-        default)))
-
 
 ;;; ============================================================================
 ;;; Property Tables and Lookup Functions
@@ -50,7 +17,7 @@
                           boolean)
                 mirrored?))
 
-(defparameter *mirrored* (read-unicodedata "mirrored.lisp" *empty-property-table*))
+(defparameter *mirrored* (load-table "UCD/UnicodeData/mirrored.lisp" *empty-property-table*))
 
 (defun mirrored? (octets start)
   (has-property? octets start *mirrored*))
@@ -67,11 +34,11 @@
                           t)
                 general-category-of canonical-combining-class-of decimal-digit-value-of digit-value-of numeric-value-of))
 
-(defparameter *general-category* (read-unicodedata "general-category.lisp" *empty-property-map*))
-(defparameter *decimal-digit-value* (read-unicodedata "decimal-digit-value.lisp" *empty-property-map*))
-(defparameter *digit-value* (read-unicodedata "digit-value.lisp" *empty-property-map*))
-(defparameter *numeric-value* (read-unicodedata "numeric-value.lisp" *empty-property-map*))
-(defparameter *canonical-combining-classes* (read-unicodedata "canonical-combining-classes.lisp" *empty-property-map*))
+(defparameter *general-category* (load-table "UCD/UnicodeData/general-category.lisp" *empty-property-map*))
+(defparameter *decimal-digit-value* (load-table "UCD/UnicodeData/decimal-digit-value.lisp" *empty-property-map*))
+(defparameter *digit-value* (load-table "UCD/UnicodeData/digit-value.lisp" *empty-property-map*))
+(defparameter *numeric-value* (load-table "UCD/UnicodeData/numeric-value.lisp" *empty-property-map*))
+(defparameter *canonical-combining-classes* (load-table "UCD/UnicodeData/canonical-combining-classes.lisp" *empty-property-map*))
 
 (defun general-category-of (octets start)
   (property-mapping-of octets start *general-category*))
@@ -100,9 +67,9 @@
                           code-point:code-point)
                 upppercase-of lowercase-of titlecase-of))
 
-(defparameter *uppercase-mapping* (read-unicodedata "uppercase-mapping.lisp" *empty-code-point-map*))
-(defparameter *lowercase-mapping* (read-unicodedata "lowercase-mapping.lisp" *empty-code-point-map*))
-(defparameter *titlecase-mapping* (read-unicodedata "titlecase-mapping.lisp" *empty-code-point-map*))
+(defparameter *uppercase-mapping* (load-table "UCD/UnicodeData/uppercase-mapping.lisp" *empty-code-point-map*))
+(defparameter *lowercase-mapping* (load-table "UCD/UnicodeData/lowercase-mapping.lisp" *empty-code-point-map*))
+(defparameter *titlecase-mapping* (load-table "UCD/UnicodeData/titlecase-mapping.lisp" *empty-code-point-map*))
 
 (defun uppercase-of (octets start)
   (code-point-mapping-of octets start *uppercase-mapping*))
@@ -126,10 +93,10 @@
                 character-name-of bidirectional-category-of canonical-decomposition-of
                 compatibility-decomposition-of))
 
-(defparameter *character-names* (read-unicodedata "character-names.lisp" *empty-string-map*))
-(defparameter *bidirectional-category* (read-unicodedata "bidirectional-category.lisp" *empty-string-map*))
-(defparameter *canonical-decomposition-mapping* (read-unicodedata "canonical-decomposition-mapping.lisp" *empty-string-map*))
-(defparameter *compatibility-decomposition-mapping* (read-unicodedata "compatibility-decomposition-mapping.lisp" *empty-string-map*))
+(defparameter *character-names* (load-table "UCD/UnicodeData/character-names.lisp" *empty-string-map*))
+(defparameter *bidirectional-category* (load-table "UCD/UnicodeData/bidirectional-category.lisp" *empty-string-map*))
+(defparameter *canonical-decomposition-mapping* (load-table "UCD/UnicodeData/canonical-decomposition-mapping.lisp" *empty-string-map*))
+(defparameter *compatibility-decomposition-mapping* (load-table "UCD/UnicodeData/compatibility-decomposition-mapping.lisp" *empty-string-map*))
 
 (defun character-name-of (octets start)
   (string-mapping-of octets start *character-names*))

@@ -363,3 +363,20 @@
     (property-map (write-property-map table stream))
     (code-point-map (write-code-point-map table stream))
     (string-map (write-string-map table stream))))
+
+;;; ============================================================================
+;;; Reading Tables From the Data Directory
+;;; ============================================================================
+
+(declaim (ftype (function (string (or property-table property-map code-point-map string-map))
+                          (or property-table property-map code-point-map string-map))
+                load-table))
+
+(defun load-table (filename default)
+  (with-open-file (stream
+                   (files:table-pathname filename)
+                   :if-does-not-exist nil
+                   :external-format :utf-8)
+    (if stream
+        (read-table :stream stream :table-type (type-of default))
+        default)))
