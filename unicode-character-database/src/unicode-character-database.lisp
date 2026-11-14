@@ -2,8 +2,11 @@
 (defpackage #:unicode-character-database
   (:use #:common-lisp)
 
-  ;; "src/configuration.lisp"
-  (:export #:make-unicode-character-database-pathname)
+  ;; "src/files.lisp"
+  (:export #:data-directory-pathname
+           #:input-pathname
+           #:output-pathname
+           #:with-table-output-stream)
 
   ;; "src/parser.lisp"
   (:export #:read-database-stream

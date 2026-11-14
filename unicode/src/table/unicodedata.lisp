@@ -1,10 +1,8 @@
 ;;;; This is "src/table/unicodedata.lisp".
 ;;;;
 ;;;; "unicodedata.lisp" defines tables and lookup functions for data in
-;;;; UnicodeData.txt from the Unicode Character Database.
-;;;;
-;;;; We store the data in on file per table at the pathname returned by
-;;;; (unicode.configuration:data-pathname filename). The filenames are:
+;;;; UnicodeData.txt from the Unicode Character Database. Our tables are
+;;;; stored in the "data/UCD/UnicodeData/" directory, one file per table:
 ;;;;
 ;;;; · "character-names.lisp"
 ;;;; · "general-category.lisp"
@@ -32,7 +30,10 @@
                 read-unicodedata))
 
 (defun read-unicodedata (filename default)
-  (with-open-file (stream (unicode.configuration:data-pathname filename) :if-does-not-exist nil :external-format :utf-8)
+  (with-open-file (stream
+                   (unicode.files:table-pathname (concatenate 'string "UCD/UnicodeData/" filename))
+                   :if-does-not-exist nil
+                   :external-format :utf-8)
     (if stream
         (read-table :stream stream :table-type (type-of default))
         default)))

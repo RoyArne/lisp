@@ -21,12 +21,45 @@ functions.
 - write-proplist-tables—proplist.lisp
 - write-common-lisp-tables—common-lisp-standard-characters.lisp
 
-## configuration.lisp
+## files.lisp
 
-- (**make-unicode-character-database-pathname** _filename_) → _pathname_
+Defines the #:unicode-character-database.files which tells us
+where data files are located.
 
-  Returns the pathname to _filename_ in the
-  unicode-character-database/data/UCD/ directory.
+The input files are mostly mirrors of [the Unicode Character
+Database](https://www.unicode.org/Public/UCD/latest/). They are
+located at (**data-directory-pathname**) and share the same directory
+structure.
+
+The output files are located in the unicode system. The directory
+structure is the same as for the input files, but with an additional
+level of directories at the bottom:
+
+The output tables are stored in a subdirectory named after the input
+file, one file per table. For example:
+
+```
+(output-pathname (input-pathname "UCD/PropList.txt") 'pattern-white-space)
+→
+#P"…/unicode/data/UCD/PropList/pattern-white-space.lisp"
+```
+
+- (**data-directory-pathname**) → _pathname_
+
+  Returns the pathname to the "unicode-character-database/data/"
+  directory.
+  
+- (**input-pathname** _filespec_) → _pathname_
+
+  Returns the pathname to _filespec_ inside the data directory. For
+  example, (**input-pathname** "UCD/PropList.txt") returns the full
+  path to "unicode-character-database/data/UCD/PropList.txt".
+  
+- (**output-pathname** _input-pathname_ _table-name_) → _output-pathname_
+
+  Returns the pathname to the file "_table-name_.lisp" in the
+  "unicode/data/" directory.
+
 
 ## parser.lisp
 

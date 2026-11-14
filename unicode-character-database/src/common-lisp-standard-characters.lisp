@@ -3,16 +3,15 @@
   (:use #:common-lisp
         #:unicode-character-database)
 
-  (:local-nicknames (#:configuration #:unicode-character-database.configuration)
+  (:local-nicknames (#:files #:unicode-character-database.files)
                     (#:parser #:unicode-character-database.parser)
                     (#:code-point #:unicode.code-point)
                     (#:utf-8 #:unicode.utf-8)
                     (#:table #:unicode.table))
 
   (:export #:common-lisp-syntax-types
-           #:write-common-lisp-syntax-types
-           #:common-lisp-traits
-           #:write-common-lisp-traits
+           #:syntax-types
+           #:traits
            #:write-common-lisp-tables))
   
 (in-package #:unicode-character-database.common-lisp)
@@ -182,45 +181,31 @@ _;low line, or underscore;SP09;constituent;alphabetic;standard
 (defun string-to-keyword (string)
   (intern (substitute #\- #\Space (string-upcase string)) "KEYWORD"))
 
-(defmacro with-output-stream ((stream filename) &body body)
-  `(with-open-file (,stream
-                   (configuration:data-pathname ,filename)
-                   :direction :output
-                   :if-exists :supersede
-                   :if-does-not-exist :create
-                   :external-format :utf-8)
-     ,@body))
-
 ;;; We make a syntax-type property-map with the following
 ;;; properties:"whitespace" "non-terminating macro character" "single escape"
 ;;; "terminating macro character" "multiple escape" "constituent"
 
-(defun common-lisp-syntax-types ()
+(defun syntax-types ()
   (table:construct-property-map (:test 'eql)
     (loop for line in (common-lisp-character-database!)
           do (parser:with-nth-fields line ((code-point 0)
-                                    (syntax-type 3))
+                                           (syntax-type 3))
                (table:add-entry code-point (string-to-keyword syntax-type))))))
-          
-(defun write-common-lisp-syntax-types ()
-  (with-output-stream (stream "common-lisp-syntax-types.lisp")
-    (table:write-property-map (common-lisp-syntax-types) stream)))
 
 ;;; We make a traits property map with the following properties: "package
 ;;; marker" "alphadigit" "alphabetic" "invalid".
 
-(defun common-lisp-traits ()
+(defun traits ()
   (table:construct-property-map (:test 'eql)
     (loop for line in (common-lisp-character-database!)
           do (parser:with-nth-fields line ((code-point 0)
                                     (trait 4))
                (table:add-entry code-point (string-to-keyword trait))))))
 
-(defun write-common-lisp-traits ()
-  (with-output-stream (stream "common-lisp-traits.lisp")
-    (table:write-property-map (common-lisp-traits) stream)))
-
 (defun write-common-lisp-tables ()
-  (write-common-lisp-syntax-types)
-  (write-common-lisp-traits)
+  (let ((names '(syntax-types traits)))
+    (files:write-tables (files:input-pathname "Common-Lisp.txt")
+                        names
+                        (loop for name in names
+                              collect (funcall name))))
   t)

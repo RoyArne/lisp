@@ -3,7 +3,7 @@
   (:use #:common-lisp
         #:unicode-character-database)
 
-  (:local-nicknames (#:configuration #:unicode-character-database.configuration)
+  (:local-nicknames (#:files #:unicode-character-database.files)
                     (#:parser #:unicode-character-database.parser)
                     (#:code-point #:unicode.code-point)
                     (#:utf-8 #:unicode.utf-8)
@@ -110,7 +110,7 @@ Sourced from https://www.unicode.org/reports/tr44/#PropList.txt")
 (defparameter *proplist* nil)
 
 (defun load-proplist! ()
-  (setf *proplist* (parse-proplist (parser:load-database-file "PropList.txt")))
+  (setf *proplist* (parse-proplist (parser:load-database-file "UCD/PropList.txt")))
   t)
 
 (defun proplist! ()
@@ -126,17 +126,12 @@ Sourced from https://www.unicode.org/reports/tr44/#PropList.txt")
                                                       :key 'second))
           do (table:add-entry code-point))))
 
+
 (defun write-proplist-tables ()
-  (configuration:ensure-data-directory-exists "proplist")
-  (loop for property-name in (mapcar 'rest *property-names*)
-        do (with-open-file (stream
-                            (configuration:data-pathname (configuration:make-table-filename property-name)
-                                                         :directory "proplist")
-                            :direction :output
-                            :if-exists :supersede
-                            :if-does-not-exist :create
-                            :external-format :utf-8)
-             (table:write-table (make-table property-name) stream)))
+  (let ((names (mapcar 'rest *property-names*)))
+    (files:write-tables (files:input-pathname "UCD/PropList.txt")
+                        names
+                        (mapcar 'make-table names)))
   t)
 
   

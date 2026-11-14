@@ -3,7 +3,7 @@
   (:use #:common-lisp
         #:unicode-character-database)
 
-  (:local-nicknames (#:configuration #:unicode-character-database.configuration)
+  (:local-nicknames (#:files #:unicode-character-database.files)
                     (#:parser #:unicode-character-database.parser)
                     (#:code-point #:unicode.code-point)
                     (#:utf-8 #:unicode.utf-8)
@@ -245,7 +245,7 @@ Unicode, Inc. (1999) UnicodeData File Format
                :key #'first)))
 
 (defun load-unicodedata! ()
-  (setf *unicodedata* (parse-unicodedata (preprocess-unicodedata (parser:load-database-file "UnicodeData.txt"))))
+  (setf *unicodedata* (parse-unicodedata (preprocess-unicodedata (parser:load-database-file "UCD/UnicodeData.txt"))))
   t)
 
 (defun unicodedata! ()
@@ -361,29 +361,53 @@ Unicode, Inc. (1999) UnicodeData File Format
       (when titlecase-mapping
         (table:add-entry code-point titlecase-mapping)))))
 
+(defun write-unicodedata-table (name)
+  (with-table-output-stream (stream (files:input-pathname "UCD/UnicodeData.txt") name)
+    (table:write-table (funcall name) stream)))
+
 (defun write-unicodedata-tables ()
-  (configuration:ensure-data-directory-exists "unicodedata")
-  (flet ((list-filename/table (name)
-           (list (configuration:make-table-filename name)
-                 (funcall name))))
-    (loop for (name table) in (map 'list #'list-filename/table '(character-names
-                                                                 general-category
-                                                                 canonical-combining-classes
-                                                                 bidirectional-category
-                                                                 ;; canonical-decomposition-mapping
-                                                                 ;; compatibility-decomposition-mapping
-                                                                 decimal-digit-value
-                                                                 digit-value
-                                                                 numeric-value
-                                                                 mirrored
-                                                                 uppercase-mapping
-                                                                 lowercase-mapping
-                                                                 titlecase-mapping))
-          do (with-open-file (stream
-                              (configuration:data-pathname name :directory "unicodedata")
-                              :direction :output
-                              :if-exists :supersede
-                              :if-does-not-exist :create
-                              :external-format :utf-8)
-               (table:write-table table stream)))
-    t))
+  (mapc 'write-unicodedata-table '(character-names
+                                   general-category
+                                   canonical-combining-classes
+                                   bidirectional-category
+                                   ;; canonical-decomposition-mapping
+                                   ;; compatibility-decomposition-mapping
+                                   decimal-digit-value
+                                   digit-value
+                                   numeric-value
+                                   mirrored
+                                   uppercase-mapping
+                                   lowercase-mapping
+                                   titlecase-mapping))
+  t)
+
+        
+  ;;       do (with-table-output-stream (stream (files:input-pathname "UCD/unicodedata.txt") name)
+  ;;            (table:write-table (funcall name) stream))
+  ;;       t))
+                                             
+        
+  ;; (flet ((list-filename/table (name)
+  ;;          (list (configuration:make-table-filename name)
+  ;;                (funcall name))))
+  ;;   (loop for (name table) in (map 'list #'list-filename/table '(character-names
+  ;;                                                                general-category
+  ;;                                                                canonical-combining-classes
+  ;;                                                                bidirectional-category
+  ;;                                                                ;; canonical-decomposition-mapping
+  ;;                                                                ;; compatibility-decomposition-mapping
+  ;;                                                                decimal-digit-value
+  ;;                                                                digit-value
+  ;;                                                                numeric-value
+  ;;                                                                mirrored
+  ;;                                                                uppercase-mapping
+  ;;                                                                lowercase-mapping
+  ;;                                                                titlecase-mapping))
+  ;;         do (with-open-file (stream
+  ;;                             (configuration:data-pathname name :directory "unicodedata")
+  ;;                             :direction :output
+  ;;                             :if-exists :supersede
+  ;;                             :if-does-not-exist :create
+  ;;                             :external-format :utf-8)
+  ;;              (table:write-table table stream)))
+  ;;   t))

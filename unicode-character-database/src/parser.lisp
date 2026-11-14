@@ -3,7 +3,7 @@
   (:use #:common-lisp
         #:unicode-character-database)
 
-  (:local-nicknames (#:configuration #:unicode-character-database.configuration)
+  (:local-nicknames (#:files #:unicode-character-database.files)
                     (#:code-point #:unicode.code-point)
                     (#:utf-8 #:unicode.utf-8)
                     (#:table #:unicode.table))
@@ -145,12 +145,12 @@ fields are strings."
         while line
         collect line))
 
-(defun load-database-file (filename)
-  "Read the NAME file and return a list of database lines. Each line is a list
+(defun load-database-file (filespec)
+  "Read the FILESPEC file and return a list of database lines. Each line is a list
 of fields, beginning with a code point field. Note that the code point field
 is parsed by means of parse-code-point-field."
   (with-open-file (stream
-                   (configuration:make-unicode-character-database-pathname filename)
+                   (files:input-pathname filespec)
                    :direction :input
                    :element-type 'character
                    :external-format :utf-8)

@@ -9,7 +9,7 @@
   :depends-on ("unicode" "split-sequence")
   :serial t
   :components ((:file "unicode-character-database")
-               (:file "configuration")
+               (:file "files")
                (:file "parser")
                (:file "unicodedata")
                (:file "proplist")

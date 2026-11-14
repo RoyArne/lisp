@@ -10,7 +10,7 @@
   :serial t
   :components ((:file "unicode")
 
-               (:file "configuration")
+               (:file "files")
 
                (:file "code-point")
 
