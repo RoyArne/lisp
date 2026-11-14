@@ -14,8 +14,8 @@
                 common-lisp-syntax-type-of
                 common-lisp-trait-of))
 
-(defparameter *common-lisp-syntax-types* (read-unicodedata "common-lisp-syntax-types.lisp" *empty-property-map*))
-(defparameter *common-lisp-traits* (read-unicodedata "common-lisp-traits.lisp" *empty-property-map*))
+(defparameter *common-lisp-syntax-types* (load-table "Common-Lisp/syntax-types.lisp" *empty-property-map*))
+(defparameter *common-lisp-traits* (read-unicodedata "Common-Lisp/traits.lisp" *empty-property-map*))
 
 (defun common-lisp-syntax-type-of (octets start)
   (property-mapping-of octets start *common-lisp-syntax-types*))
