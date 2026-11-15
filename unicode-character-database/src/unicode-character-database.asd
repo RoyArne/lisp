@@ -11,6 +11,11 @@
   :components ((:file "unicode-character-database")
                (:file "files")
                (:file "parser")
-               (:file "unicodedata")
-               (:file "proplist")
-               (:file "common-lisp-standard-characters")))
+
+               (:module ucd
+                :serial t
+                :depends-on ("unicode-character-database" "files" "parser")
+                :components ((:file "unicodedata")
+                             (:file "proplist")))
+               
+               (:file "common-lisp")))

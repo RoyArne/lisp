@@ -1,3 +1,4 @@
+;;;; This is "unicode/src/table/common-lisp.lisp".
 
 (in-package #:unicode.table)
 
@@ -15,7 +16,7 @@
                 common-lisp-trait-of))
 
 (defparameter *common-lisp-syntax-types* (load-table "Common-Lisp/syntax-types.lisp" *empty-property-map*))
-(defparameter *common-lisp-traits* (read-unicodedata "Common-Lisp/traits.lisp" *empty-property-map*))
+(defparameter *common-lisp-traits* (load-table "Common-Lisp/traits.lisp" *empty-property-map*))
 
 (defun common-lisp-syntax-type-of (octets start)
   (property-mapping-of octets start *common-lisp-syntax-types*))

@@ -35,7 +35,14 @@
                              (:file "construction")
                              (:file "lookup")
                              (:file "stream")
-                             (:file "unicodedata")))
+
+                             (:module ucd
+                              :serial t
+                              :depends-on ("stream")
+                              :components ((:file "unicodedata")
+                                           (:file "proplist")))
+                             
+                             (:file "common-lisp")))
 
                (:module rope
                 :serial t

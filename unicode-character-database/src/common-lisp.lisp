@@ -1,3 +1,4 @@
+;;;; This is "unicode-character-database/src/common-lisp.lisp".
 
 (defpackage #:unicode-character-database.common-lisp
   (:use #:common-lisp

@@ -11,8 +11,6 @@ This is the package definition, **#:unicode.table**. It makes use of
 
 Defines the table structures.
 
-### Exports
-
 - **property-table**—a structure.
 
   Any code point added to a property table has the property named in
@@ -39,8 +37,6 @@ Defines the table structures.
 Defines a set of macros to create tables. Note that code points
 **must** be added in _ascending_ order, otherwise the lookup functions
 will not work.
-
-### Exports
 
 - **add-entry**
 
@@ -85,8 +81,6 @@ ascending order.
 Functions to lookup code points in tables. Note that all the functions
 expect to work directly on utf-8 encoded text.
 
-### Exports
-
 - (**has-property?** _vector_ _start_ _property-table_) → _property_
 
   Returns **t** if the code point is in the table, otherwise *nil*.
@@ -111,8 +105,6 @@ expect to work directly on utf-8 encoded text.
 
 Defines functions to read/write tables from/to streams.
 
-### Exports
-
 - (**read-table** &key _stream_ _table-type_) → _table_
 - (**write-table** (_table_ &optional _stream_) → _table_
 - (**write-property-table** _table_ &optional _stream_) → _property-table_
@@ -124,20 +116,14 @@ Defines functions to read/write tables from/to streams.
 - (**write-string-map** _table_ &optional _stream_) → _string-map_
 - (**read-string-map** &optional _stream_) → _string-map_
 
-## unicodedata.lisp
+## ucd/unicodedata.lisp
 
-Reads table data from the unicode/data/ directory and defines lookup
-functions for each table. Default, empty tables are used for any files
-that are not found.
+Loads tables generated from
+[UCD/UnicodeData.txt](https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt). The
+generated tables are located in the "unicode/data/UCD/UnicodeData/"
+directory.
 
-The data files are created by the "unicode-character-database" system,
-specifically by the **#:unicode-character-database.unicodedata**
-package.
-
-The source data file is
-[unicodedata.txt](https://www.unicode.org/L2/L1999/UnicodeData.html).
-
-### Exports
+Defines the following functions (which are exported from the **#:unicode** package):
 
 - (**mirrored?** _vector_ _start_)
 - (**general-category-of** _vector_ _start_)
@@ -152,3 +138,13 @@ The source data file is
 - (**bidirectional-category-of** _vector_ _start_)
 - (**canonical-decomposition-of** _vector_ _start_)
 - (**compatibility-decomposition-of** _vector_ _start_)
+
+## ucd/proplist.lisp
+
+Loads tables generated from
+[UCD/PropList.txt](https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt). The
+generated tables are located in the "unicode/data/UCD/PropList/"
+directory.
+
+## common-lisp.lisp
+

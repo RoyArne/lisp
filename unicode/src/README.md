@@ -3,8 +3,8 @@
 
 ## unicode.lisp
 
-This is the package definition for the whole unicode system. For now
-it only exports property names from "PropList.txt"in the Unicode
+This is the package definition for the whole unicode system. It
+exports names and lookup functions for properties from the Unicode
 Character Database.
 
 ## files.lisp
