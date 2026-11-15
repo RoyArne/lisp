@@ -270,7 +270,7 @@ Unicode, Inc. (1999) UnicodeData File Format
     (do-unicodedata (code-point general-category)
       (table:add-entry code-point (general-category-to-keyword general-category)))))
 
-(defun canonical-combining-classes ()
+(defun canonical-combining-classes () ; https://www.unicode.org/reports/tr44/#Canonical_Combining_Class_Values
   (table:construct-property-map (:test 'eql)
     (do-unicodedata (code-point canonical-combining-classes)
       (table:add-entry code-point canonical-combining-classes))))

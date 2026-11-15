@@ -44,7 +44,7 @@
                 #:lowercase-of
                 #:titlecase-of
                 #:character-name-of
-                #:combining-class-of
+                #:canonical-combining-class-of
                 #:bidirectional-category-of
                 #:canonical-decomposition-of
                 #:compatibility-decomposition-of)

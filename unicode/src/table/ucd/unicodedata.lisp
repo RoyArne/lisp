@@ -28,17 +28,16 @@
 ;;; ============================================================================
 
 (declaim (type property-map
-               *general-category* *canonical-combining-classes* *decimal-digit-value* *digit-value* *numeric-value*)
+               *general-category* *decimal-digit-value* *digit-value* *numeric-value*)
 
          (ftype (function (utf-8:octets vector:index)
                           t)
-                general-category-of canonical-combining-class-of decimal-digit-value-of digit-value-of numeric-value-of))
+                general-category-of decimal-digit-value-of digit-value-of numeric-value-of))
 
 (defparameter *general-category* (load-table "UCD/UnicodeData/general-category.lisp" *empty-property-map*))
 (defparameter *decimal-digit-value* (load-table "UCD/UnicodeData/decimal-digit-value.lisp" *empty-property-map*))
 (defparameter *digit-value* (load-table "UCD/UnicodeData/digit-value.lisp" *empty-property-map*))
 (defparameter *numeric-value* (load-table "UCD/UnicodeData/numeric-value.lisp" *empty-property-map*))
-(defparameter *canonical-combining-classes* (load-table "UCD/UnicodeData/canonical-combining-classes.lisp" *empty-property-map*))
 
 (defun general-category-of (octets start)
   (property-mapping-of octets start *general-category*))
@@ -52,8 +51,19 @@
 (defun numeric-value-of (octets start)
   (property-mapping-of octets start *numeric-value*))
 
+(declaim (type property-map  *canonical-combining-classes*)
+
+         (ftype (function (utf-8:octets vector:index)
+                          (unsigned-byte 8))
+                canonical-combining-class-of))
+
+(defparameter *canonical-combining-classes* (load-table "UCD/UnicodeData/canonical-combining-classes.lisp" *empty-property-map*))
+
+;; Description of ccc values: https://www.unicode.org/reports/tr44/#CCC_Values_Table
+;; The default value is zero.
 (defun canonical-combining-class-of (octets start)
-  (property-mapping-of octets start *canonical-combining-classes*))
+  (or (property-mapping-of octets start *canonical-combining-classes*)
+      0))
 
 
 ;;; ============================================================================
