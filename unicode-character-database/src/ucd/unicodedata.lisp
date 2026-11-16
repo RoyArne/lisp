@@ -90,7 +90,7 @@
     ("CN" "OTHER-NOT-ASSIGNED" "OTHER")))
 
 (defun general-category-to-keyword (general-category)
-  (intern (first general-category) (find-package "KEYWORD")))
+  (parser:parse-keyword (first general-category)))
 
 (defparameter *unicodedata* '()
   "A list. Every element is a list of fields from UnicodeData.txt:
@@ -362,7 +362,7 @@ Unicode, Inc. (1999) UnicodeData File Format
         (table:add-entry code-point titlecase-mapping)))))
 
 (defun write-unicodedata-table (name)
-  (with-table-output-stream (stream (files:input-pathname "UCD/UnicodeData.txt") name)
+  (files:with-table-output-stream (stream (files:input-pathname "UCD/UnicodeData.txt") name)
     (table:write-table (funcall name) stream)))
 
 (defun write-unicodedata-tables ()

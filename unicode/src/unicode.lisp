@@ -69,4 +69,8 @@
            #:terminal-punctuation #:terminal-punctuation?
            #:unified-ideograph #:unified-ideograph?
            #:variation-selector #:variation-selector?
-           #:white-space #:white-space?))
+           #:white-space #:white-space?)
+
+  ;; UCD/HangulSyllableType.txt
+  ;; ===================
+  (:export #:hangul-syllable-type #:hangul-syllable-type-of))

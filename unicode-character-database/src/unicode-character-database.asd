@@ -16,6 +16,7 @@
                 :serial t
                 :depends-on ("unicode-character-database" "files" "parser")
                 :components ((:file "unicodedata")
-                             (:file "proplist")))
+                             (:file "proplist")
+                             (:file "hangulsyllabletype")))
                
                (:file "common-lisp")))

@@ -40,7 +40,8 @@
                               :serial t
                               :depends-on ("stream")
                               :components ((:file "unicodedata")
-                                           (:file "proplist")))
+                                           (:file "proplist")
+                                           (:file "hangulsyllabletype")))
                              
                              (:file "common-lisp")))
 

@@ -7,33 +7,33 @@
                     (#:utf-8 #:unicode.utf-8)
                     (#:vector #:system.sequence.vector))
 
-  ;; "src/table/type-definitions.lisp"
+  ;; "unicode/src/table/type-definitions.lisp"
   (:export #:property-table
            #:property-map
            #:code-point-map
            #:string-map)
 
-  ;; "src/table/construction.lisp"
+  ;; "unicode/src/table/construction.lisp"
   (:export #:add-entry
            #:construct-property-table
            #:construct-property-map
            #:construct-code-point-map
            #:construct-string-map)
   
-  ;; "src/table/lookup.lisp"
+  ;; "unicode/src/table/lookup.lisp"
   (:export #:has-property?
            #:property-mapping-of
            #:code-point-mapping-of
            #:string-mapping-of)
 
-  ;; "src/table/stream.lisp"
+  ;; "unicode/src/table/stream.lisp"
   (:export #:write-table #:read-table
            #:write-property-table #:read-property-table
            #:write-property-map #:read-property-map
            #:write-code-point-map #:read-code-point-map
            #:write-string-map #:read-string-map)
 
-  ;; "src/table/unicodedata.lisp"; the symbols are external in the #:unicode package
+  ;; "unicode/src/table/ucd/unicodedata.lisp"; the symbols are external in the #:unicode package
   (:import-from #:unicode
                 #:mirrored?
                 #:general-category-of
@@ -49,11 +49,11 @@
                 #:canonical-decomposition-of
                 #:compatibility-decomposition-of)
 
-  ;; "src/table/common-lisp-standard-characters.lisp"
+  ;; "unicode/src/table/common-lisp.lisp"
   (:export #:common-lisp-syntax-type-of
            #:common-lisp-trait-of)
 
-  ;; "src/table/proplist.lisp"; the symbols are external in the #:unicode package
+  ;; "unicode/src/table/ucd/proplist.lisp"; the symbols are external in the #:unicode package
   (:import-from #:unicode
                 #:ascii-hex-digit #:ascii-hex-digit?
                 #:bidi-control #:bidi-control?
@@ -92,4 +92,8 @@
                 #:terminal-punctuation #:terminal-punctuation?
                 #:unified-ideograph #:unified-ideograph?
                 #:variation-selector #:variation-selector?
-                #:white-space #:white-space?))
+                #:white-space #:white-space?)
+
+  ;; "unicode/src/table/ucd/hangulsyllabletype.lisp"; the symbols are external in the #:unicode package
+  (:import-from #:unicode
+                #:hangul-syllable-type #:hangul-syllable-type-of))

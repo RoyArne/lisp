@@ -13,6 +13,8 @@
            #:parse-sequence
            #:parse-code-point-field)
 
+  (:export #:parse-keyword)
+
   (:export #:with-nth-field
            #:when-nth-field
            #:with-nth-fields)
@@ -65,6 +67,12 @@
      (parse-sequence field))
     (t
      (parse-code-point field))))
+
+;;; Keywords
+;;; ========
+
+(defun parse-keyword (field)
+  (intern (string-upcase field) "KEYWORD"))
 
 ;;; Database Lines
 ;;; ==============
