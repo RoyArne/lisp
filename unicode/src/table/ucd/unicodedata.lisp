@@ -99,7 +99,7 @@
                *character-names* *bidirectional-category* *canonical-decomposition-mapping* *compatibility-decomposition-mapping*)
 
          (ftype (function (utf-8:octets vector:index)
-                          utf-8:octets)
+                          (or null utf-8:octets))
                 character-name-of bidirectional-category-of canonical-decomposition-of
                 compatibility-decomposition-of))
 
