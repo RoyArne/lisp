@@ -15,7 +15,8 @@
                (:module ucd
                 :serial t
                 :depends-on ("unicode-character-database" "files" "parser")
-                :components ((:file "unicodedata")
+                :components ((:file "derivednormalizationprops")
+                             (:file "unicodedata")
                              (:file "proplist")
                              (:file "hangulsyllabletype")))
                

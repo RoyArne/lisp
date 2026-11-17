@@ -19,4 +19,12 @@
 (defparameter *hangul-syllable-type* (load-table "UCD/HangulSyllableType/hangul-syllable-type.lisp" *empty-property-map*))
 
 (defun hangul-syllable-type-of (octets start)
+  "Return one of the keywords :l, :v, :t, :lv or :lvt. Return nil if the code
+point at start in octets is not a hangul character.
+
+  :l Leading_Jamo
+  :v Vowel_Jamo
+  :t Trailing_Jamo
+ :lv LV_Syllable
+:lvt LVT_Syllable"
   (property-mapping-of octets start *hangul-syllable-type*))
