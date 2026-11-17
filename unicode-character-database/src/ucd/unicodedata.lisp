@@ -280,44 +280,51 @@ Unicode, Inc. (1999) UnicodeData File Format
     (do-unicodedata (code-point bidirectional-category)
       (table:add-entry code-point (utf-8:string-to-octets bidirectional-category)))))
 
+(defun full-decomposition (property-map mapping)
+  (reduce #'nconc
+          (loop for code-point in mapping
+                for vector = (utf-8:make-octets (utf-8:encoded-length code-point))
+                do (utf-8:encode-code-point code-point vector 0)
+                collect (or (full-decomposition property-map (table:property-mapping-of vector 0 property-map))
+                            (list code-point)))))
 
-;; (defun canonical-decomposition-p (decomposition-mapping)
-;;   (eql (first decomposition-mapping) :canonical))
+(defun full-decomposition-map (property-map)
+  (labels ((encode-code-points (list)
+             (loop with octets = (utf-8:make-octets (reduce '+ (mapcar 'utf-8:encoded-length list)))
+                   for code-point in list
+                   for next = (utf-8:encode-code-point code-point octets 0) then (utf-8:encode-code-point code-point octets next)
+                   finally (return octets)))
+           (add-bucket (bucket entry-size)
+             (loop for i from 0 below (length bucket) by entry-size
+                   collect (cons (utf-8:decode-code-point bucket i)
+                                 (encode-code-points (full-decomposition property-map
+                                                                         (table:property-mapping-of bucket i property-map)))))))
+    (let ((entries (append (add-bucket (aref (table::property-map-from property-map) 0) 1)
+                           (add-bucket (aref (table::property-map-from property-map) 1) 2)
+                           (add-bucket (aref (table::property-map-from property-map) 2) 3)
+                           (add-bucket (aref (table::property-map-from property-map) 3) 4))))
+      (table:construct-string-map ()
+        (loop for entry in entries
+              do (table:add-entry (first entry) (rest entry)))))))
 
-;; (defun compatibility-decomposition-p (decomposition-mapping)
-;;   (or (canonical-decomposition-p decomposition-mapping)
-;;       (eql (first decomposition-mapping) :compatibility)))
+(defun canonical-decomposition? (decomposition-mapping)
+  (eql (first decomposition-mapping) :canonical))
 
-;; (defun full-decomposition-of (vector map)
-;;   (reduce #'nconc
-;;           (loop for part in (table:property-of vector 0 map)
-;;                 collect (or (full-decomposition-of (utf-8:encode-code-points (list part)) map) (list part)))))
-  
-;; (defun full-decomposition-map (property-map)
-;;   (table:construct-interval→octets ()
-;;     (table:do-interval→property (code-point decomposition property-map)
-;;       (table:add-entry code-point
-;;                        (utf-8:encode-code-points (full-decomposition-of (utf-8:encode-code-points (list code-point))
-;;                                                                         property-map))))))
+(defun compatibility-decomposition? (decomposition-mapping)
+  (or (canonical-decomposition-p decomposition-mapping)
+      (eql (first decomposition-mapping) :compatibility)))
 
-;; (defun initial-canonical-decomposition-map ()
-;;   (table:construct-interval→property ()
-;;     (do-unicodedata (code-point decomposition-mapping)
-;;       (when (canonical-decomposition-p decomposition-mapping)
-;;         (table:add-entry code-point (rest decomposition-mapping))))))
+(defun initial-decomposition-map (&optional (include-mapping? 'canonical-decomposition?))
+  (table:construct-property-map (:test 'eql)
+    (do-unicodedata (code-point decomposition-mapping)
+      (when (funcall include-mapping? decomposition-mapping)
+        (table:add-entry code-point (rest decomposition-mapping))))))
 
-;; (defun canonical-decomposition-mapping ()
-;;   (full-decomposition-map (initial-canonical-decomposition-map)))
+(defun canonical-decomposition-mapping ()
+  (full-decomposition-map (initial-decomposition-map 'canonical-decomposition?)))
 
-;; (defun initial-compatibility-decomposition-map ()
-;;   (table:construct-interval→property ()
-;;     (do-unicodedata (code-point decomposition-mapping)
-;;       (when (compatibility-decomposition-p decomposition-mapping)
-;;         (table:add-entry code-point (rest decomposition-mapping))))))
-
-;; (defun compatibility-decomposition-mapping ()
-;;   (full-decomposition-map (initial-compatibility-decomposition-map)))
-
+(defun compatibility-decomposition-mapping ()
+  (full-decomposition-map (initial-decomposition-map 'compatibility-decomposition?)))
 
 (defun decimal-digit-value ()
   (table:construct-property-map (:test 'eql)
@@ -370,8 +377,8 @@ Unicode, Inc. (1999) UnicodeData File Format
                                    general-category
                                    canonical-combining-classes
                                    bidirectional-category
-                                   ;; canonical-decomposition-mapping
-                                   ;; compatibility-decomposition-mapping
+                                   canonical-decomposition-mapping
+                                   compatibility-decomposition-mapping
                                    decimal-digit-value
                                    digit-value
                                    numeric-value
@@ -380,34 +387,3 @@ Unicode, Inc. (1999) UnicodeData File Format
                                    lowercase-mapping
                                    titlecase-mapping))
   t)
-
-        
-  ;;       do (with-table-output-stream (stream (files:input-pathname "UCD/unicodedata.txt") name)
-  ;;            (table:write-table (funcall name) stream))
-  ;;       t))
-                                             
-        
-  ;; (flet ((list-filename/table (name)
-  ;;          (list (configuration:make-table-filename name)
-  ;;                (funcall name))))
-  ;;   (loop for (name table) in (map 'list #'list-filename/table '(character-names
-  ;;                                                                general-category
-  ;;                                                                canonical-combining-classes
-  ;;                                                                bidirectional-category
-  ;;                                                                ;; canonical-decomposition-mapping
-  ;;                                                                ;; compatibility-decomposition-mapping
-  ;;                                                                decimal-digit-value
-  ;;                                                                digit-value
-  ;;                                                                numeric-value
-  ;;                                                                mirrored
-  ;;                                                                uppercase-mapping
-  ;;                                                                lowercase-mapping
-  ;;                                                                titlecase-mapping))
-  ;;         do (with-open-file (stream
-  ;;                             (configuration:data-pathname name :directory "unicodedata")
-  ;;                             :direction :output
-  ;;                             :if-exists :supersede
-  ;;                             :if-does-not-exist :create
-  ;;                             :external-format :utf-8)
-  ;;              (table:write-table table stream)))
-  ;;   t))
