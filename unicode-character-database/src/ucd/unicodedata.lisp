@@ -387,3 +387,19 @@ Unicode, Inc. (1999) UnicodeData File Format
                                    lowercase-mapping
                                    titlecase-mapping))
   t)
+
+
+(defun primary-composites ()
+  ;; For any given version of the Unicode Standard, the list of primary
+  ;; composites can be computed by extracting all canonical decomposable
+  ;; characters from UnicodeData.txt in the Unicode Character Database, adding
+  ;; the list of precomposed Hangul syllables (D132), and subtracting the list
+  ;; of Full Composition Exclusions.
+  (files:with-table-output-stream (stream (files:input-pathname "UCD/UnicodeData.txt") 'primary-composites)
+    (let ((exclusions (unicode-character-database.derivednormalizationprops:full-composition-exclusions)))
+      (do-unicodedata (code-point decomposition-mapping)
+        (when (canonical-decomposition? decomposition-mapping)
+          (unless (find code-point exclusions :test 'code-point:in-range?)
+            (format stream "~S~%" (list (second decomposition-mapping)
+                                        (third decomposition-mapping)
+                                        code-point))))))))
