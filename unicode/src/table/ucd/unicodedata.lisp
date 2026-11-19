@@ -119,3 +119,62 @@
 
 (defun compatibility-decomposition-of (octets start)
   (string-mapping-of octets start *compatibility-decomposition-mapping*))
+
+
+;;; ============================================================================
+;;; Other Tables
+;;; ============================================================================
+
+(declaim (type (vector utf-8:octets) *primary-composites*)
+         
+         (ftype (function ()
+                          (vector utf-8:octets))
+                load-primary-composites)
+
+         (ftype (function (utf-8:octets vector:index)
+                          (values (or null code-point:code-point) (or null vector:index)))))
+         
+(defun load-primary-composites ()
+  ;; Each list of code points in primary-composites.lisp contains two code
+  ;; points that make up the third one.
+  (let ((lines (or (with-table-stream (stream "UCD/UnicodeData/primary-composites.lisp")
+                     (loop for line = (read stream nil nil) while line
+                           collect line))
+                   nil)))
+    (loop with vector = (make-array (length lines) :element-type 'utf-8:octets :initial-element utf-8:*empty*)
+          for line in lines
+          for i = 0 then (1+ i)
+          do (setf (aref vector i)
+                   (loop with octets = (utf-8:make-octets (reduce '+ (mapcar 'utf-8:encoded-length line)))
+                         for code-point in line
+                         for start = (utf-8:encode-code-point code-point octets 0)
+                         then (utf-8:encode-code-point code-point octets start)
+                         finally (return octets)))
+          finally (return (sort vector 'utf-8:octets<)))))
+
+
+(defparameter *primary-composites* (load-primary-composites))
+        
+(defun primary-composite-of (octets start)
+  (when (< start (length octets))
+    (let ((end (utf-8:next octets start)))
+      (when (< end (length octets))
+        (setf end (utf-8:next octets end))
+        (let ((left 0)
+              (right (length *primary-composites*)))
+          (loop while (< left right)
+                do (let ((middle (floor (+ left right) 2)))
+                     (if (utf-8:octets< (aref *primary-composites* middle) octets
+                                        :end1 (utf-8:next (aref *primary-composites* middle)
+                                                          (utf-8:next (aref *primary-composites* middle) 0))
+                                        :start2 start :end2 end)
+                         (setf left (1+ middle))
+                         (setf right middle))))
+          (when (and (< left (length *primary-composites*))
+                     (utf-8:octets= (aref *primary-composites* left) octets
+                                    :end1 (utf-8:next (aref *primary-composites* left)
+                                                      (utf-8:next (aref *primary-composites* left) 0))
+                                    :start2 start :end2 end))
+            (utf-8:decode-code-point (aref *primary-composites* left)
+                                     (utf-8:previous (aref *primary-composites* left)
+                                                     (length (aref *primary-composites* left))))))))))

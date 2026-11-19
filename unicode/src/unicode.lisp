@@ -19,7 +19,8 @@
            #:canonical-combining-class-of
            #:bidirectional-category-of
            #:canonical-decomposition-of
-           #:compatibility-decomposition-of)
+           #:compatibility-decomposition-of
+           #:primary-composite-of)
 
   ;; UCD/PropList.txt
   ;; ================

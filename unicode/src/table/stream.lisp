@@ -368,15 +368,19 @@
 ;;; Reading Tables From the Data Directory
 ;;; ============================================================================
 
+(defmacro with-table-stream ((stream filename) &body body)
+  `(with-open-file (,stream
+                    (files:table-pathname ,filename)
+                    :if-does-not-exist nil
+                    :external-format :utf-8)
+     ,@body))
+
 (declaim (ftype (function (string (or property-table property-map code-point-map string-map))
                           (or property-table property-map code-point-map string-map))
                 load-table))
 
 (defun load-table (filename default)
-  (with-open-file (stream
-                   (files:table-pathname filename)
-                   :if-does-not-exist nil
-                   :external-format :utf-8)
+  (with-table-stream (stream filename)
     (if stream
         (read-table :stream stream :table-type (type-of default))
         default)))

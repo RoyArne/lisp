@@ -47,7 +47,8 @@
                 #:canonical-combining-class-of
                 #:bidirectional-category-of
                 #:canonical-decomposition-of
-                #:compatibility-decomposition-of)
+                #:compatibility-decomposition-of
+                #:primary-composite-of)
 
   ;; "unicode/src/table/common-lisp.lisp"
   (:export #:common-lisp-syntax-type-of
