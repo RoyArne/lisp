@@ -11,7 +11,8 @@
   (:export #:parse-code-point
            #:parse-range
            #:parse-sequence
-           #:parse-code-point-field)
+           #:parse-code-point-field
+           #:code-point-field-to-octets)
 
   (:export #:parse-keyword)
 
@@ -67,6 +68,19 @@
      (parse-sequence field))
     (t
      (parse-code-point field))))
+
+(defun code-point-field-to-octets (field)
+  (flet ((encode (code-point)
+           (let ((octets (utf-8:make-octets (utf-8:encoded-length code-point))))
+             (utf-8:encode-code-point code-point octets 0)
+             octets)))
+    (etypecase field
+      (code-point:code-point (encode field))
+      (code-point:range (apply 'concatenate
+                               'utf-8:octets
+                               (loop for code-point from (code-point:range-start field) upto (code-point:range-end field)
+                                     collect (encode code-point))))
+       (list (apply 'concatenate 'utf-8:octets (mapcar #'encode field))))))
 
 ;;; Keywords
 ;;; ========
