@@ -107,6 +107,10 @@ with the '@' character."
   "Return a list of fields."
   (map 'list #'trim-spaces (split-sequence:split-sequence #\; (strip-comment line) :test #'char=)))
 
+(defun @linep (line)
+  (when (< 0 (length line))
+    (char= #\@ (char line 0))))
+    
 (defun read-database-line (stream &optional (eof-error-p t) eof-value)
   "Read one line from stream and return a list of fields. The first field is
 always a code point field. Note that the code point field is parsed by means
@@ -114,6 +118,8 @@ of parse-code-point-field."
   (loop for line = (read-line stream eof-error-p :eof)
         when (eql line :eof)
         do (return eof-value)
+        when (@linep line)
+        do (return (trim-spaces (strip-comment line)))
         do (let ((fields (fields line)))
              (when (fieldsp fields)
                (return (cons (parse-code-point-field (first fields)) (rest fields)))))))
