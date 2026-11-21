@@ -18,6 +18,7 @@
                 :components ((:file "derivednormalizationprops")
                              (:file "unicodedata")
                              (:file "proplist")
-                             (:file "hangulsyllabletype")))
+                             (:file "hangulsyllabletype")
+                             (:file "normalizationtest")))
                
                (:file "common-lisp")))

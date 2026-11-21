@@ -1,6 +1,9 @@
 
 (defpackage #:unicode
 
+  ;; normalization.lisp
+  (:export #:to-nfc #:to-nfd #:to-nfkc #:to-nfkd)
+  
   ;; UCD/UnicodeData.txt
   ;; ===================
   ;;

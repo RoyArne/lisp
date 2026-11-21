@@ -45,6 +45,8 @@
                              
                              (:file "common-lisp")))
 
+               (:file "normalization")
+
                (:module rope
                 :serial t
                 :depends-on ("unicode" utf-8)
