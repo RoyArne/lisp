@@ -19,7 +19,7 @@
 
 (defun hangul-syllable-type ()
   (table:construct-property-map (:test 'eql)
-    (loop for line in (parser:load-database-file "UCD/HangulSyllableType.txt")
+    (loop for line in (sort (parser:load-database-file "UCD/HangulSyllableType.txt") 'code-point:less-than-range? :key 'first)
           do (table:add-entry (first line) (parser:parse-keyword (second line))))))
 
 (defun write-hangul-syllable-type ()
