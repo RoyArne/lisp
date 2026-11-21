@@ -10,6 +10,9 @@
                     (#:vector #:system.sequence.vector)
                     (#:table #:unicode.table))
 
+  (:import-from #:unicode
+                #:to-nfc #:to-nfd #:to-nfkc #:to-nfkd)
+
   (:export #:to-nfc #:to-nfd #:to-nfkc #:to-nfkd))
 
 (in-package #:unicode.normalization)
