@@ -24,7 +24,9 @@
 
   (:export #:filter-lines
            #:read-database-stream
-           #:load-database-file))
+           #:load-database-file
+           #:defloader
+           #:remove-loaded-file))
 
 (in-package #:unicode-character-database.parser)
 
@@ -211,3 +213,20 @@ is parsed by means of parse-code-point-field."
                    :element-type 'character
                    :external-format :utf-8)
     (read-database-stream stream)))
+
+(defparameter *files* (make-hash-table :test 'equal))
+
+(defmacro defloader (result-function-name filespec &optional (parser-function nil parser-function-supplied?))
+  "Defines a function named result-function-name that stores and returns the
+filespec database. The parser-function, if supplied, is applied to the database before
+it is returned."
+  `(defun ,result-function-name ()
+     (or (gethash ,filespec *files*)
+         (setf (gethash ,filespec *files*)
+               (if ,parser-function-supplied?
+                   (funcall ,parser-function (load-database-file ,filespec))
+                   (load-database-file ,filespec))))))
+
+(defun remove-loaded-file (filespec)
+  "Remove filespec from *files*."
+  (remhash filespec *files*))

@@ -21,16 +21,7 @@ for a description of the named properties.."))
 
 (in-package #:unicode-character-database.derivednormalizationprops)
 
-(defparameter *derivednormalizationprops* nil)
-
-(defun load-derivednormalizationprops ()
-  (setf *derivednormalizationprops* (parser:load-database-file "UCD/DerivedNormalizationProps.txt"))
-  t)
-
-(defun derivednormalizationprops! ()
-  (unless *derivednormalizationprops*
-    (load-derivednormalizationprops))
-  *derivednormalizationprops*)
+(parser:defloader derivednormalizationprops! "UCD/DerivedNormalizationProps.txt")
 
 (defun full-composition-exclusions ()
   (loop for line in (derivednormalizationprops!)

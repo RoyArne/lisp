@@ -47,16 +47,7 @@ description of the named properties."))
 (defun parse-proplist (proplist)
   (mapcar 'parse-proplist-line proplist))
 
-(defparameter *proplist* nil)
-
-(defun load-proplist! ()
-  (setf *proplist* (parse-proplist (parser:load-database-file "UCD/PropList.txt")))
-  t)
-
-(defun proplist! ()
-  (unless *proplist*
-    (load-proplist!))
-  *proplist*)
+(parser:defloader proplist! "UCD/PropList.txt" 'parse-proplist)
 
 (defun make-table (property-name)
   (table:construct-property-table (property-name)
