@@ -14,13 +14,16 @@
            #:parse-code-point-field
            #:code-point-field-to-octets)
 
-  (:export #:parse-keyword)
+  (:export #:parse-symbol-name
+           #:parse-keyword
+           #:equals-symbol?)
 
   (:export #:with-nth-field
            #:when-nth-field
            #:with-nth-fields)
 
-  (:export #:read-database-stream
+  (:export #:filter-lines
+           #:read-database-stream
            #:load-database-file))
 
 (in-package #:unicode-character-database.parser)
@@ -70,6 +73,7 @@
      (parse-code-point field))))
 
 (defun code-point-field-to-octets (field)
+  "Returns an octet vector corresponding to the code point(s) in field."
   (flet ((encode (code-point)
            (let ((octets (utf-8:make-octets (utf-8:encoded-length code-point))))
              (utf-8:encode-code-point code-point octets 0)
@@ -82,11 +86,23 @@
                                      collect (encode code-point))))
        (list (apply 'concatenate 'utf-8:octets (mapcar #'encode field))))))
 
-;;; Keywords
-;;; ========
+;;; Keywords and Symbols
+;;; ====================
+
+(defun parse-symbol-name (field)
+  "Return field as a symbol name: any underscores ('_') are replaced by
+hyphens ('-'), converting the result to upper case."
+  (string-upcase (substitute #\- #\_ (copy-seq field) :test 'char=)))
 
 (defun parse-keyword (field)
+  "Parse field as a keyword."
   (intern (string-upcase field) "KEYWORD"))
+
+(defun equals-symbol? (symbol field)
+  "True if the symbol name of symbol equals field as returned by
+parse-symbol-name."
+  (string= (symbol-name symbol) (parse-symbol-name field)))
+  
 
 ;;; Database Lines
 ;;; ==============
@@ -157,6 +173,18 @@ element to the name variable."
 
 ;;; Parsing Database Files
 ;;; ======================
+
+(declaim (ftype (function (integer list &key (:predicate (or function symbol)) (:key (or function symbol)))
+                          list)
+                filter-lines))
+
+(defun filter-lines (n lines &key (predicate 'string=) (key 'identity))
+  "Return a list of those lines where predicate is true for the nth field. If key
+is given then it is applied to the nth field before it is passed to the
+predicate function."
+  (loop for line in lines
+        when (funcall predicate (funcall key (nth n line)))
+        collect line))
 
 (declaim (ftype (function (stream)
                           list)
