@@ -23,6 +23,7 @@
            #:with-nth-fields)
 
   (:export #:filter-lines
+           #:distinct-field-values
            #:read-database-stream
            #:load-database-file
            #:defloader
@@ -104,7 +105,6 @@ hyphens ('-'), converting the result to upper case."
   "True if the symbol name of symbol equals field as returned by
 parse-symbol-name."
   (string= (symbol-name symbol) (parse-symbol-name field)))
-  
 
 ;;; Database Lines
 ;;; ==============
@@ -175,10 +175,16 @@ element to the name variable."
 
 ;;; Parsing Database Files
 ;;; ======================
+;;;
+;;; TODO: We need a way to sort lines by code point field.
 
 (declaim (ftype (function (integer list &key (:predicate (or function symbol)) (:key (or function symbol)))
                           list)
-                filter-lines))
+                filter-lines)
+         
+         (ftype (function ((or integer symbol function) list &key (:test (or symbol function)) (:key (or symbol function)))
+                          list)
+                distinct-field-values))
 
 (defun filter-lines (n lines &key (predicate 'string=) (key 'identity))
   "Return a list of those lines where predicate is true for the nth field. If key
@@ -188,6 +194,22 @@ predicate function."
         when (funcall predicate (funcall key (nth n line)))
         collect line))
 
+(defun distinct-field-values (field lines &key (test 'eql) (key 'identity))
+  "Returns a list of distinct values for the given field. The field may be designated by:
+  · an integer n: the nth field is used.
+  · a symbol or a function: the function is applied to a list of field and its
+    return value is used."
+  (loop with distinct-values = '()
+        for line in lines
+        do (pushnew (etypecase field
+                      (symbol (funcall field line))
+                      (function (funcall field line))
+                      (integer (nth field line)))
+                    distinct-values
+                    :test test
+                    :key key)
+        finally (return distinct-values)))
+                     
 (declaim (ftype (function (stream)
                           list)
                 read-database-stream)
