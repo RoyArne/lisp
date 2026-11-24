@@ -21,6 +21,7 @@
 
   (:export #:parse-symbol-name
            #:parse-keyword
+           #:parse-symbol
            #:equals-symbol?)
 
   (:export #:with-nth-field
@@ -215,8 +216,9 @@
             (list (> (sequence-start field1) (sequence-end field2)))))))
 
 
-;;; Keywords and Symbols
-;;; ====================
+;;; ============================================================================
+;;; Symbol Fields
+;;; ============================================================================
 
 (defun parse-symbol-name (field)
   "Return field as a symbol name: any underscores ('_') are replaced by
@@ -225,15 +227,21 @@ hyphens ('-'), converting the result to upper case."
 
 (defun parse-keyword (field)
   "Parse field as a keyword."
-  (intern (string-upcase field) "KEYWORD"))
+  (intern (parse-symbol-name field) (find-package "KEYWORD")))
+
+(defun parse-symbol (field &optional (package *package*))
+  "Parse field as a symbol."
+  (intern (parse-symbol-name field) package))
 
 (defun equals-symbol? (symbol field)
   "True if the symbol name of symbol equals field as returned by
 parse-symbol-name."
   (string= (symbol-name symbol) (parse-symbol-name field)))
 
+
+;;; ============================================================================
 ;;; Database Lines
-;;; ==============
+;;; ============================================================================
 ;;;
 ;;; · each database line deals with one code point.
 ;;;
@@ -299,46 +307,63 @@ element to the name variable."
                  collect `(,name (nth ,n ,list))))
      ,@body))
 
-;;; Parsing Database Files
-;;; ======================
-;;;
-;;; TODO: We need a way to sort lines by code point field.
 
-(declaim (ftype (function ((or integer symbol function) list)
+(deftype field-designator ()
+  "An integer, or a designator for a function, used to retreive a field from a
+database line.
+
+An integer N designates the Nth field of a line.
+
+Functions must accept one argument, a line, and return the designated field."
+  `(or (integer 0 *) symbol function))
+
+
+(declaim (ftype (function (field-designator list)
                           (or null t))
                 select-field)
 
-         (ftype (function (t (or integer symbol function) list &key (:test (or function symbol)) (:key (or function symbol)))
+         (ftype (function (t field-designator list &key (:test (or function symbol)) (:key (or function symbol)))
                           list)
                 filter-lines)
          
-         (ftype (function ((or integer symbol function) list &key (:test (or symbol function)) (:key (or symbol function)))
+         (ftype (function (field-designator list &key (:test (or symbol function)) (:key (or symbol function)))
                           list)
                 distinct-field-values))
 
 (defun select-field (field line)
+  "Return the field designated by FIELD from LINE."
   (etypecase field
     (symbol (funcall field line))
     (function (funcall field line))
     (integer (nth field line))))
 
 (defun filter-lines (value field lines &key (test 'string=) (key 'identity))
+  "Return a list of lines where the field designated by FIELD equals VALUE by the
+TEST function. The KEY function is applied to any fields being tested, but not
+to VALUE."
   (loop for line in lines
         when (funcall test value (funcall key (select-field field line)))
         collect line))
 
 (defun distinct-field-values (field lines &key (test 'eql) (key 'identity))
-  "Returns a list of distinct values for the given field. The field may be designated by:
-  · an integer n: the nth field is used.
-  · a symbol or a function: the function is applied to a list of field and its
-    return value is used."
+  "Returns a list of distinct values for the designated FIELD."
   (loop with distinct-values = '()
         for line in lines
         do (pushnew (select-field field)
                     distinct-values
                     :test test
                     :key key)
-        finally (return distinct-values)))
+        finally (return (reverse distinct-values))))
+
+(defun sort-lines (lines)
+  "Return a copy of LINES sorted in ascending order by the initial code point
+field."
+  (sort (copy-list lines) 'code-point-field< :key 'first))
+
+
+;;; ============================================================================
+;;; Parsing Database Files
+;;; ============================================================================
                      
 (declaim (ftype (function (stream)
                           list)
