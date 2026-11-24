@@ -6,13 +6,18 @@
   (:local-nicknames (#:files #:unicode-character-database.files)
                     (#:code-point #:unicode.code-point)
                     (#:utf-8 #:unicode.utf-8)
-                    (#:table #:unicode.table))
+                    (#:table #:unicode.table)
+                    (#:vector #:system.sequence.vector))
 
   (:export #:parse-code-point
            #:parse-range
            #:parse-sequence
            #:parse-code-point-field
            #:code-point-field-to-octets)
+
+  (:export #:code-point-field=
+           #:code-point-field<
+           #:code-point-field>)
 
   (:export #:parse-symbol-name
            #:parse-keyword
@@ -31,8 +36,11 @@
 
 (in-package #:unicode-character-database.parser)
 
-;;; Code Points
-;;; ===========
+;;; ============================================================================
+;;; Code Point Fields
+;;; ============================================================================
+;;;
+;;; Generally, the first field of every line is a code point field.
 ;;;
 ;;; · code points are written as four to six hexadecimal digits.
 ;;;
@@ -44,7 +52,46 @@
 ;;;
 ;;; · sequences are written as two or more code points separated by " ".
 ;;;
-;;;;  example: "0032 00F5 01A9 1166 BD022".
+;;;   example: "0032 00F5 01A9 1166 BD022".
+
+
+(deftype code-point-field ()
+  `(or code-point:code-point code-point:range list))
+
+(declaim (ftype (function (t)
+                          boolean)
+                code-point-field?))
+
+(defun code-point-field? (object)
+  (typecase object
+    (code-point:code-point t)
+    (code-point:range t)
+    (list (every (lambda (elt) (typep elt 'code-point:code-point)) object))))
+      
+
+;;; ============================================================================
+;;; Parsing Code Point Fields
+;;; ============================================================================
+
+(declaim (ftype (function (string &optional vector:index vector:end-index)
+                          code-point:code-point)
+                parse-code-point)
+
+         (ftype (function (string)
+                          code-point:range)
+                parse-range)
+
+         (ftype (function (string)
+                          list)
+                parse-sequence)
+
+         (ftype (function (string)
+                          code-point-field)
+                parse-code-point-field)
+
+         (ftype (function (code-point-field)
+                          utf-8:octets)
+                code-point-field-to-octets))
 
 (defun parse-code-point (field &optional (start 0) end)
   "Parse FIELD between START and END as a hecadecimal number."
@@ -61,9 +108,10 @@
 
 (defun parse-sequence (field)
   "Parse FIELD as a list of space separated hexadecimal numbers."
-  (map 'list
-       #'parse-code-point
-       (split-sequence:split-sequence #\Space field :test #'char= :remove-empty-subseqs t)))
+  (sort (map 'list
+             #'parse-code-point
+             (split-sequence:split-sequence #\Space field :test #'char= :remove-empty-subseqs t))
+        <))
 
 (defun parse-code-point-field (field)
   "Returns either a single code-point, a range, or a list of code-points."
@@ -88,6 +136,84 @@
                                (loop for code-point from (code-point:range-start field) upto (code-point:range-end field)
                                      collect (encode code-point))))
        (list (apply 'concatenate 'utf-8:octets (mapcar #'encode field))))))
+
+
+;;; ============================================================================
+;;; Comparing Code Point Fields
+;;; ============================================================================
+
+(declaim (ftype (function (list)
+                          code-point:code-point)
+                sequence-start
+                sequence-end)
+
+         (ftype (function (code-point-field code-point-field)
+                          boolean)
+                code-point-field=
+                code-point-field<
+                code-point-field>))
+
+(defun sequence-start (field)
+  (first field))
+
+(defun sequence-end (field)
+  (first (last field)))
+
+
+(defun code-point-field= (field1 field2)
+  "True if field1 is less than field2."
+  (etypecase field1
+    (code-point:code-point (etypecase field2
+                             (code-point:code-point (= field1 field2))
+                             (code-point:range (= field1 (code-point:range-start field2) (code-point:range-end field2)))
+                             (list (every (lambda (c) (= c field1)) field2))))
+    (code-point:range (etypecase field2
+                        (code-point:code-point (= (code-point:range-start field1) (code-point:range-end field1) field2))
+                        (code-point:range (and (= (code-point:range-start field1) (code-point:range-start field2))
+                                               (= (code-point:range-end field1) (code-point:range-end field2))))
+                        (list (and (= (code-point:range-start field1) (sequence-start field2))
+                                   (= (code-point:range-end field1) (sequence-end field2))
+                                   (= (1+ (- (code-point:range-end field1) (code-point:range-start field1))) (length field2))))))
+    (list (etypecase field2 
+            (code-point:code-point (every (lambda (c) (= c field2)) field1))
+            (code-point:range (and (= (sequence-start field1) (code-point:range-start field2))
+                                   (= (sequence-end field1) (code-point:range-end field2))
+                                   (= (length field1) (1+ (- (code-point:range-end field2) (code-point:range-start field2))))))
+            (list (and (= (length field1) (length field2))
+                       (every '= field1 field2)))))))
+
+(defun code-point-field< (field1 field2)
+  "True if field1 is less than field2."
+  (etypecase field1
+    (code-point:code-point (etypecase field2
+                             (code-point:code-point (< field1 field2))
+                             (code-point:range (code-point:less-than-range? field1 field2))
+                             (list (< field1 (sequence-start field2)))))
+    (code-point:range (etypecase field2
+                        (code-point:code-point (code-point:less-than-range? field1 field2))
+                        (code-point:range (code-point:less-than-range? field1 field2))
+                        (list (code-point:less-than-range? field1 (sequence-start field2)))))
+    (list (etypecase field2
+            (code-point:code-point (< (sequence-end field1) field2))
+            (code-point:range (code-point:less-than-range? (sequence-end field1) field2))
+            (list (< (sequence-end field1) (sequence-start field2)))))))
+
+(defun code-point-field> (field1 field2)
+  "True if field1 is greater than field2."
+  (etypecase field1
+    (code-point:code-point (etypecase field2
+                             (code-point:code-point (> field1 field2))
+                             (code-point:range (code-point:greater-than-range? field1 field2))
+                             (list (> field1 (sequence-end field2)))))
+    (code-point:range (etypecase field2
+                        (code-point:code-point (code-point:greater-than-range? field1 field2))
+                        (code-point:range (code-point:greater-than-range? field1 field2))
+                        (list (code-point:greater-than-range? field1 (sequence-end field2)))))
+    (list (etypecase field2
+            (code-point:code-point (> (sequence-start field1) field2))
+            (code-point:range (code-point:greater-than-range? (sequence-start field1) field2))
+            (list (> (sequence-start field1) (sequence-end field2)))))))
+
 
 ;;; Keywords and Symbols
 ;;; ====================
@@ -178,7 +304,11 @@ element to the name variable."
 ;;;
 ;;; TODO: We need a way to sort lines by code point field.
 
-(declaim (ftype (function (integer list &key (:predicate (or function symbol)) (:key (or function symbol)))
+(declaim (ftype (function ((or integer symbol function) list)
+                          (or null t))
+                select-field)
+
+         (ftype (function (t (or integer symbol function) list &key (:test (or function symbol)) (:key (or function symbol)))
                           list)
                 filter-lines)
          
@@ -186,12 +316,15 @@ element to the name variable."
                           list)
                 distinct-field-values))
 
-(defun filter-lines (n lines &key (predicate 'string=) (key 'identity))
-  "Return a list of those lines where predicate is true for the nth field. If key
-is given then it is applied to the nth field before it is passed to the
-predicate function."
+(defun select-field (field line)
+  (etypecase field
+    (symbol (funcall field line))
+    (function (funcall field line))
+    (integer (nth field line))))
+
+(defun filter-lines (value field lines &key (test 'string=) (key 'identity))
   (loop for line in lines
-        when (funcall predicate (funcall key (nth n line)))
+        when (funcall test value (funcall key (select-field field line)))
         collect line))
 
 (defun distinct-field-values (field lines &key (test 'eql) (key 'identity))
@@ -201,10 +334,7 @@ predicate function."
     return value is used."
   (loop with distinct-values = '()
         for line in lines
-        do (pushnew (etypecase field
-                      (symbol (funcall field line))
-                      (function (funcall field line))
-                      (integer (nth field line)))
+        do (pushnew (select-field field)
                     distinct-values
                     :test test
                     :key key)
