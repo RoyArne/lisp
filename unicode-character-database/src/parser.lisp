@@ -349,7 +349,7 @@ to VALUE."
   "Returns a list of distinct values for the designated FIELD."
   (loop with distinct-values = '()
         for line in lines
-        do (pushnew (select-field field)
+        do (pushnew (select-field field line)
                     distinct-values
                     :test test
                     :key key)
